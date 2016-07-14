@@ -68,8 +68,8 @@ void bl_dgemm_asm_4x4_strassen(
                         double*            c,
                         double*            d,
                         inc_t              ldc,
-                        int                g1,
-                        int                g2,
+						int                g1,
+						int                g2,
                         aux_t*         data
                       )
 {
