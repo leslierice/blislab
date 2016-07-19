@@ -15,6 +15,7 @@ FRAME_CC_SRC=  \
 FRAME_CPP_SRC= \
 
 KERNEL_SRC=    \
+							 kernels/bl_dgemm_asm_8x4_strassen.c \
 							 kernels/bl_dgemm_asm_4x4_strassen.c \
 
 OTHER_DEP = \

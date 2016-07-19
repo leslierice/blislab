@@ -95,16 +95,26 @@ void bl_dgemm_asm_4x4_strassen( int k,
         int gammaCB,
         aux_t* data );
 
-static void (*bl_micro_kernel) (
-        int    k,
+void bl_dgemm_asm_8x4_strassen( int k,
         double *a,
         double *b,
-        double *c,
-        double *d,
+        double *ca,
+        double *cb,
         unsigned long long ldc,
         int gammaCA,
         int gammaCB,
-        aux_t  *aux
+        aux_t* data );
+
+static void (*bl_micro_kernel) (
+        int k,
+        double *a,
+        double *b,
+        double *ca,
+        double *cb,
+        unsigned long long ldc,
+        int gammaCA,
+        int gammaCB,
+        aux_t* data
         ) = {
         BL_MICRO_KERNEL
 };

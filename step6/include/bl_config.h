@@ -65,18 +65,15 @@ extern "C" {
 #define DGEMM_MC 72
 #define DGEMM_NC 4080
 #define DGEMM_KC 256
-#define DGEMM_MR 4
+#define DGEMM_MR 8
 #define DGEMM_NR 4
 //#define DGEMM_MR 12
 //#define DGEMM_NR 4
 
 
 
-//#define BL_MICRO_KERNEL bl_dgemm_int_8x4
-//#define BL_MICRO_KERNEL bl_dgemm_asm_8x4
-#define BL_MICRO_KERNEL bl_dgemm_asm_4x4_strassen
-//#define BL_MICRO_KERNEL bl_dgemm_asm_12x4
-//#define BL_MICRO_KERNEL bl_dgemm_ukr
+// #define BL_MICRO_KERNEL bl_dgemm_asm_4x4_strassen
+#define BL_MICRO_KERNEL bl_dgemm_asm_8x4_strassen
 
 // End extern "C" construct block.
 #ifdef __cplusplus
