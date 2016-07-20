@@ -1,6 +1,6 @@
 /*
  * --------------------------------------------------------------------------
- * BLISLAB 
+ * BLISLAB
  * --------------------------------------------------------------------------
  * Copyright (C) 2016, The University of Texas at Austin
  *
@@ -29,7 +29,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * bl_dgemm.c
+ * bl_dsymm.c
  *
  *
  * Purpose:
@@ -40,20 +40,24 @@
  *
  * Modification:
  *
- * 
+ *
  * */
 
 #include <stdio.h>
 #include <omp.h>
 
 #include "bl_dgemm_kernel.h"
-#include "bl_dgemm.h"
+#include "bl_dsymm.h"
 
 inline void packA_mcxkc_d(
         int    m,
         int    k,
         double *XA,
+        int    struc,
         int    ldXA,
+        int    inc,
+        int    ic_n,
+        int    pc_n,
         int    offseta,
         double *packA
         )
@@ -61,19 +65,41 @@ inline void packA_mcxkc_d(
     int    i, p;
     double *a_pntr[ DGEMM_MR ];
 
-    for ( i = 0; i < m; i ++ ) {
-        a_pntr[ i ] = XA + ( offseta + i );
-    }
+    int diff = ic_n - pc_n;
+    int off = diff - offseta + 1;
 
-    for ( i = m; i < DGEMM_MR; i ++ ) {
-        a_pntr[ i ] = XA + ( offseta + 0 );
+    if ( struc == BL_TRANS_SYMM ) {
+        for ( i = 0; i < min( m, off ); i ++ ) {
+            a_pntr[ i ] = XA + ldXA * ( offseta + i );
+        }
+
+        for ( i = min( m, off ); i < m; i ++ ) {
+            a_pntr[ i ] = XA + inc * ( offseta + i - diff ) + ldXA * diff;
+        }
+    }
+    else {
+        for ( i = 0; i < m; i ++ ) {
+            a_pntr[ i ] = XA + inc * ( offseta + i );
+        }
+
+        for ( i = m; i < DGEMM_MR; i ++ ) {
+            a_pntr[ i ] = XA + inc * ( offseta + 0 );
+        }
     }
 
     for ( p = 0; p < k; p ++ ) {
         for ( i = 0; i < DGEMM_MR; i ++ ) {
             *packA = *a_pntr[ i ];
             packA ++;
-            a_pntr[ i ] = a_pntr[ i ] + ldXA;
+            if ( struc == BL_TRANS_SYMM && i - p <= diff ) {
+                a_pntr[ i ] = a_pntr[ i ] ++;
+            }
+            else if ( struc == BL_TRANS || ( struc == BL_SYMM && ( ic_n + offseta + i <= pc_n + p ) ) ) {
+                a_pntr[ i ] = a_pntr[ i ] ++;
+            }
+            else {
+                a_pntr[ i ] = a_pntr[ i ] + ldXA;
+            }
         }
     }
 }
@@ -92,7 +118,7 @@ inline void packB_kcxnc_d(
         double *packB
         )
 {
-    int    j, p; 
+    int    j, p;
     double *b_pntr[ DGEMM_NR ];
 
     for ( j = 0; j < n; j ++ ) {
@@ -160,7 +186,7 @@ void bl_macro_kernel(
 }
 
 // C must be aligned
-void bl_dgemm(
+void bl_dsymm(
         int    m,
         int    n,
         int    k,
@@ -174,6 +200,9 @@ void bl_dgemm(
 {
     int    i, j, p, bl_ic_nt;
     int    ic, ib, jc, jb, pc, pb;
+    int    ic_n, pc_n;
+    int    inc;
+    int    struc;
     int    ir, jr;
     double *packA, *packB;
     char   *str;
@@ -226,13 +255,42 @@ void bl_dgemm(
 
                     ib = min( my_end - ic, DGEMM_MC );
 
+                    if ( pc - ic >= DGEMM_MC ) {
+                        inc = lda;
+                        ic_n = pc;
+                        pc_n = ic;
+                        struc = BL_TRANS;
+                    } else if ( pc > ic ) {
+                        inc = 1;
+                        ic_n = pc;
+                        pc_n = ic;
+                        struc = BL_TRANS_SYMM;
+                    }
+                    else {
+                        inc = 1;
+                        ic_n = ic;
+                        pc_n = pc;
+                        struc = BL_SYMM;
+                    }
+
                     for ( i = 0; i < ib; i += DGEMM_MR ) {
+
+                        if (struc == BL_TRANS_SYMM && i >= ic_n-pc_n)  {
+                            struc = BL_SYMM;
+                            ic_n = ic;
+                            pc_n = pc;
+                        }
+
                         packA_mcxkc_d(
                                 min( ib - i, DGEMM_MR ),
                                 pb,
-                                &XA[ pc * lda ],
+                                &XA[ pc_n * lda + ic_n ],
+                                struc,
                                 lda,
-                                ic + i,
+                                inc,
+                                ic_n,
+                                pc_n,
+                                i,
                                 &packA[ tid * DGEMM_MC * pb + i * pb ]
                                 );
                     }
@@ -243,7 +301,7 @@ void bl_dgemm(
                             pb,
                             packA  + tid * DGEMM_MC * pb,
                             packB,
-                            &C[ jc * ldc + ic ], 
+                            &C[ jc * ldc + ic ],
                             ldc
                             );
 
@@ -259,6 +317,3 @@ void bl_dgemm(
 
 
 //bf = m_R = 8
-
-
-

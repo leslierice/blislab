@@ -29,7 +29,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * bl_dgemm_ref.c
+ * bl_dsymm_ref.c
  *
  *
  * Purpose:
@@ -43,7 +43,7 @@
  *
  * */
 
-#include "bl_dgemm.h"
+#include "bl_dsymm.h"
 
 #ifdef USE_BLAS
 /*
@@ -56,7 +56,7 @@ extern void dgemm_(char*, char*, int*, int*, int*, double*, double*,
         int*, double*, int*, double*, double*, int*);
 #endif
 
-void bl_dgemm_ref(
+void bl_dsymm_ref(
         int    m,
         int    n,
         int    k,

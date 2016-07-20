@@ -29,7 +29,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * test_bl_dgemm.c
+ * test_bl_dsymm.c
  *
  *
  * Purpose:
@@ -46,7 +46,7 @@
 
 #include <omp.h>
 
-#include "bl_dgemm.h"
+#include "bl_dsymm.h"
 
 #define USE_SET_DIFF 1
 #define TOLERANCE 1E-10
@@ -71,7 +71,7 @@ void computeError(
 
 }
 
-void test_bl_dgemm(
+void test_bl_dsymm(
         int m,
         int n,
         int k
@@ -95,7 +95,7 @@ void test_bl_dgemm(
     C     = bl_malloc_aligned( ldc, n + 4, sizeof(double) );
     C_ref = (double*)malloc( sizeof(double) * m * n );
 
-    nrepeats = 3;
+    nrepeats = 1;
 
     srand (time(NULL));
 
@@ -124,7 +124,7 @@ void test_bl_dgemm(
     for ( i = 0; i < nrepeats; i ++ ) {
         bl_dgemm_beg = bl_clock();
         {
-            bl_dgemm_strassen(
+            bl_dsymm_strassen(
                     m,
                     n,
                     k,
@@ -148,7 +148,7 @@ void test_bl_dgemm(
     for ( i = 0; i < nrepeats; i ++ ) {
         ref_beg = bl_clock();
         {
-            bl_dgemm_ref(
+            bl_dsymm(
                     m,
                     n,
                     k,
@@ -203,7 +203,7 @@ int main( int argc, char *argv[] )
     sscanf( argv[ 2 ], "%d", &n );
     sscanf( argv[ 3 ], "%d", &k );
 
-    test_bl_dgemm( m, n, k );
+    test_bl_dsymm( m, n, k );
 
     return 0;
 }

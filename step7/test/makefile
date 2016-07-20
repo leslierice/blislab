@@ -8,7 +8,7 @@ endif
 
 
 BLISLAB_TEST_CC_SRC= \
-									 test_bl_dgemm.c \
+									 test_bl_dsymm.c \
 
 BLISLAB_TEST_CPP_SRC=\
 

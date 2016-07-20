@@ -85,6 +85,7 @@ extern "C" {
 #define BL_GEN 0
 #define BL_SYMM 1
 #define BL_TRANS 2
+#define BL_TRANS_SYMM 3
 
 // gettimeofday() needs this.
 #if BL_OS_WINDOWS
@@ -106,7 +107,7 @@ extern "C" {
 #define C_ref( i, j ) C_ref[ (j)*ldc_ref + (i) ]
 #define C( i, j )     C[ (j)*ldc + (i) ]
 
-void bl_dgemm_strassen(
+void bl_dsymm_strassen(
         int    m,
         int    n,
         int    k,
@@ -134,7 +135,7 @@ void bl_printmatrix(
 double bl_clock( void );
 double bl_clock_helper();
 
-void bl_dgemm_ref(
+void bl_dsymm_ref(
     int    m,
     int    n,
     int    k,

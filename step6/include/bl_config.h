@@ -71,9 +71,9 @@ extern "C" {
 //#define DGEMM_NR 4
 
 
-
+#define BL_MICRO_KERNEL bl_dgemm_asm_8x4
 // #define BL_MICRO_KERNEL bl_dgemm_asm_4x4_strassen
-#define BL_MICRO_KERNEL bl_dgemm_asm_8x4_strassen
+#define BL_MICRO_KERNEL_STRASSEN bl_dgemm_asm_8x4_strassen
 
 // End extern "C" construct block.
 #ifdef __cplusplus

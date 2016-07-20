@@ -1,6 +1,6 @@
 /*
  * --------------------------------------------------------------------------
- * BLISLAB 
+ * BLISLAB
  * --------------------------------------------------------------------------
  * Copyright (C) 2016, The University of Texas at Austin
  *
@@ -40,15 +40,15 @@
  *
  * Modification:
  *
- * 
+ *
  * */
 
-#include "bl_dgemm.h"
+#include "bl_dsymm.h"
 
 /*
  *
  *
- */ 
+ */
 double *bl_malloc_aligned(
         int    m,
         int    n,
@@ -62,7 +62,7 @@ double *bl_malloc_aligned(
 
     if ( err ) {
         printf( "bl_malloc_aligned(): posix_memalign() failures" );
-        exit( 1 );    
+        exit( 1 );
     }
 
     return ptr;
@@ -217,7 +217,7 @@ void bl_get_range( int n, int bf, int* start, int* end )
 	//         13     >0    f        1    3      4     3     3     3+
 	//         14     >0    f        2    2      4     4     3     3+
 	//         15     >0    f        3    1      4     4     4     3+
-	//         15     =0    f        3    1      4     4     4     3 
+	//         15     =0    f        3    1      4     4     4     3
 	//
 	//         12     =0    t        4    0      3     3     3     3
 	//         12     >0    t        4    0      3+    3     3     3
@@ -270,5 +270,5 @@ void bl_get_range( int n, int bf, int* start, int* end )
 			// thread's end.
 			if ( work_id == n_way - 1 ) *end += n_bf_left;
 		}
-	
+
 }

@@ -84,6 +84,12 @@ struct aux_s {
 };
 typedef struct aux_s aux_t;
 
+void bl_dgemm_asm_8x4( int k,
+        double *a,
+        double *b,
+        double *c,
+        unsigned long long ldc,
+        aux_t* data );
 
 void bl_dgemm_asm_4x4_strassen( int k,
         double *a,
@@ -95,7 +101,28 @@ void bl_dgemm_asm_4x4_strassen( int k,
         int gammaCB,
         aux_t* data );
 
+void bl_dgemm_asm_8x4_strassen( int k,
+        double *a,
+        double *b,
+        double *ca,
+        double *cb,
+        unsigned long long ldc,
+        int gammaCA,
+        int gammaCB,
+        aux_t* data );
+
 static void (*bl_micro_kernel) (
+        int k,
+        double *a,
+        double *b,
+        double *c,
+        unsigned long long ldc,
+        aux_t* data
+        ) = {
+        BL_MICRO_KERNEL
+};
+
+static void (*bl_micro_kernel_strassen) (
         int    k,
         double *a,
         double *b,
@@ -106,7 +133,7 @@ static void (*bl_micro_kernel) (
         int gammaCB,
         aux_t  *aux
         ) = {
-        BL_MICRO_KERNEL
+        BL_MICRO_KERNEL_STRASSEN
 };
 
 

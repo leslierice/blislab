@@ -8,17 +8,20 @@ $(info * Using CFLAGS=${CFLAGS})
 $(info * Using LDFLAGS=${LDFLAGS})
 
 FRAME_CC_SRC=  \
-							 dgemm/my_dgemm.c \
-							 dgemm/bl_dgemm_ref.c \
-							 dgemm/bl_dgemm_util.c \
+							 dsymm/my_dsymm.c \
+							 dsymm/my_dsymm_strassen.c \
+							 dsymm/bl_dsymm_ref.c \
+							 dsymm/bl_dgemm_util.c \
 
 FRAME_CPP_SRC= \
 
 KERNEL_SRC=    \
+							 kernels/bl_dgemm_asm_8x4.c \
+							 kernels/bl_dgemm_asm_8x4_strassen.c \
 							 kernels/bl_dgemm_asm_4x4_strassen.c \
 
 OTHER_DEP = \
-			                 include/bl_dgemm.h \
+			                 include/bl_dsymm.h \
 			                 include/bl_dgemm_kernel.h \
 
 BLISLAB_OBJ=$(FRAME_CC_SRC:.c=.o) $(FRAME_CPP_SRC:.cpp=.o) $(KERNEL_SRC:.c=.o) $(FRAME_CC_SRC_S:.c=.os) $(KERNEL_SRC_S:.c=.os)

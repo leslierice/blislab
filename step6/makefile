@@ -9,12 +9,14 @@ $(info * Using LDFLAGS=${LDFLAGS})
 
 FRAME_CC_SRC=  \
 							 dgemm/my_dgemm.c \
+							 dgemm/my_dgemm_strassen.c \
 							 dgemm/bl_dgemm_ref.c \
 							 dgemm/bl_dgemm_util.c \
 
 FRAME_CPP_SRC= \
 
 KERNEL_SRC=    \
+							 kernels/bl_dgemm_asm_8x4.c \
 							 kernels/bl_dgemm_asm_8x4_strassen.c \
 							 kernels/bl_dgemm_asm_4x4_strassen.c \
 

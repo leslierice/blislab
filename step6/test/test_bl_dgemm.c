@@ -145,7 +145,7 @@ void test_bl_dgemm(
     for ( i = 0; i < nrepeats; i ++ ) {
         ref_beg = bl_clock();
         {
-            bl_dgemm_ref(
+            bl_dgemm(
                     m,
                     n,
                     k,
