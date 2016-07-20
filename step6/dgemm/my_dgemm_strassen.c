@@ -49,7 +49,7 @@
 #include "bl_dgemm_kernel.h"
 #include "bl_dgemm.h"
 
-inline void packA_add_mcxkc_d(
+inline void packA_add_mcxkc_d_str(
         int    m,
         int    k,
         double *XAA,
@@ -89,7 +89,7 @@ inline void packA_add_mcxkc_d(
  * --------------------------------------------------------------------------
  */
 
-inline void packA_mcxkc_d(
+inline void packA_mcxkc_d_str(
         int    m,
         int    k,
         double *XA,
@@ -122,7 +122,7 @@ inline void packA_mcxkc_d(
  * --------------------------------------------------------------------------
  */
 
-inline void packB_add_kcxnc_d(
+inline void packB_add_kcxnc_d_str(
         int    n,
         int    k,
         double *XBA,
@@ -158,7 +158,7 @@ inline void packB_add_kcxnc_d(
  * --------------------------------------------------------------------------
  */
 
-inline void packB_kcxnc_d(
+inline void packB_kcxnc_d_str(
         int    n,
         int    k,
         double *XB,
@@ -280,7 +280,7 @@ void bl_dgemm_str(
             #pragma omp parallel for num_threads( bl_ic_nt ) private( jr )
             for ( j = 0; j < jb; j += DGEMM_NR ) {
                 if ( gammaB == 0 ) {
-                    packB_kcxnc_d(
+                    packB_kcxnc_d_str(
                             min( jb - j, DGEMM_NR ),
                             pb,
                             &XBA[ pc ],
@@ -290,7 +290,7 @@ void bl_dgemm_str(
                             );
                 }
                 else {
-                    packB_add_kcxnc_d(
+                    packB_add_kcxnc_d_str(
                             min( jb - j, DGEMM_NR ),
                             pb,
                             &XBA[ pc ],
@@ -318,7 +318,7 @@ void bl_dgemm_str(
 
                     for ( i = 0; i < ib; i += DGEMM_MR ) {
                         if ( gammaA == 0 ) {
-                            packA_mcxkc_d(
+                            packA_mcxkc_d_str(
                                     min( ib - i, DGEMM_MR ),
                                     pb,
                                     &XAA[ pc * lda ],
@@ -328,7 +328,7 @@ void bl_dgemm_str(
                                     );
                         }
                         else {
-                            packA_add_mcxkc_d(
+                            packA_add_mcxkc_d_str(
                                     min( ib - i, DGEMM_MR ),
                                     pb,
                                     &XAA[ pc * lda ],
