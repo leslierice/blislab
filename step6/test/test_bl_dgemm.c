@@ -181,6 +181,8 @@ void test_bl_dgemm(
     printf( "%5d\t %5d\t %5d\t %5.2lf\t %5.2lf\n",
             m, n, k, flops / bl_dgemm_rectime, flops / ref_rectime );
 
+    fflush(stdout);
+
     free( A     );
     free( B     );
     free( C     );
