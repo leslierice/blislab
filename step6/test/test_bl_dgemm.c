@@ -93,7 +93,7 @@ void test_bl_dgemm(
     ldc     = ( ( m - 1 ) / DGEMM_MR + 1 ) * DGEMM_MR;
     ldc_ref = m;
     C     = bl_malloc_aligned( ldc, n + 4, sizeof(double) );
-    C_ref = (double*)malloc( sizeof(double) * m * n );
+    C_ref = bl_malloc_aligned( ldc, n + 4, sizeof(double) );
 
     nrepeats = 3;
 
@@ -145,7 +145,7 @@ void test_bl_dgemm(
     for ( i = 0; i < nrepeats; i ++ ) {
         ref_beg = bl_clock();
         {
-            bl_dgemm_ref(
+            bl_dgemm(
                     m,
                     n,
                     k,
