@@ -241,7 +241,7 @@ void bl_dsymm(
             }
 
             //#pragma omp parallel for num_threads( bl_ic_nt ) private( ic, ib, i, ir )
-            #pragma omp parallel num_threads( bl_ic_nt ) private( ic, ib, i, ir )
+            #pragma omp parallel num_threads( bl_ic_nt ) private( ic, ib, i, ir, ic_n, pc_n, inc, struc )
             {
                 int     tid      = omp_get_thread_num();
                 int     my_start;
