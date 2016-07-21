@@ -93,7 +93,7 @@ void test_bl_dsymm(
     ldc     = ( ( m - 1 ) / DGEMM_MR + 1 ) * DGEMM_MR;
     ldc_ref = m;
     C     = bl_malloc_aligned( ldc, n + 4, sizeof(double) );
-    C_ref = (double*)malloc( sizeof(double) * m * n );
+    C_ref = bl_malloc_aligned( ldc, n + 4, sizeof(double) );
 
     nrepeats = 1;
 

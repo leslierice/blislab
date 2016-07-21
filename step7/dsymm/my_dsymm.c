@@ -91,10 +91,8 @@ inline void packA_mcxkc_d(
         for ( i = 0; i < DGEMM_MR; i ++ ) {
             *packA = *a_pntr[ i ];
             packA ++;
-            if ( struc == BL_TRANS_SYMM && i - p <= diff ) {
-                a_pntr[ i ] = a_pntr[ i ] ++;
-            }
-            else if ( struc == BL_TRANS || ( struc == BL_SYMM && ( ic_n + offseta + i <= pc_n + p ) ) ) {
+
+            if ( struc == BL_TRANS || ( struc == BL_SYMM && ( ic_n + offseta + i <= pc_n + p ) ) || ( struc == BL_TRANS_SYMM && i - p <= diff ) ) {
                 a_pntr[ i ] = a_pntr[ i ] ++;
             }
             else {
@@ -275,7 +273,7 @@ void bl_dsymm(
 
                     for ( i = 0; i < ib; i += DGEMM_MR ) {
 
-                        if (struc == BL_TRANS_SYMM && i >= ic_n-pc_n)  {
+                        if ( struc == BL_TRANS_SYMM && i >= ic_n - pc_n )  {
                             struc = BL_SYMM;
                             ic_n = ic;
                             pc_n = pc;

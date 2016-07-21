@@ -39,7 +39,7 @@ void bl_dgemm_asm_8x4_strassen(
     "                                            \n\t"
     "movq                %4, %%rcx               \n\t" // load address of ca
     "movq                %7, %%rdx               \n\t" // load address of cb
-    "movq               %6, %%rdi               \n\t" // load ldc
+    "movq                %6, %%rdi               \n\t" // load ldc
     "leaq        (,%%rdi,8), %%rdi               \n\t" // ldc * sizeof(double)
     "leaq   (%%rcx,%%rdi,2), %%r10               \n\t" // load address of ca + 2 * ldc;
     "leaq   (%%rdx,%%rdi,2), %%r11               \n\t" // load address of cb + 2 * ldc;
@@ -347,9 +347,9 @@ void bl_dgemm_asm_8x4_strassen(
     "vmovapd           %%ymm2,  0 * 32(%%rdx)    \n\t" // and store back to memory: Cb.
 	"vmovapd    1 * 32(%%rcx),  %%ymm0           \n\t" // ymm0 = Ca( 4:7, 0 )
     "vmovapd    1 * 32(%%rdx),  %%ymm3           \n\t" // ymm3 = Cb( 4:7, 0 )
-    "vmulpd            %%ymm7,  %%ymm8,  %%ymm1  \n\t" // scale by gammaCA, ymm1 = ymm7( gammaCA ) * ymm9( ab0_3:0 )
-    "vaddpd            %%ymm1,  %%ymm0,  %%ymm1  \n\t" // ymm0 += ymm9
-    "vmulpd            %%ymm6,  %%ymm8,  %%ymm2  \n\t" // scale by gammaCB, ymm2 = ymm6( gammaCB ) * ymm9( ab0_3:0 )
+    "vmulpd            %%ymm7,  %%ymm8,  %%ymm1  \n\t" // scale by gammaCA, ymm1 = ymm7( gammaCA ) * ymm8( ab4_7:0 )
+    "vaddpd            %%ymm1,  %%ymm0,  %%ymm1  \n\t" // ymm1 += ymm0
+    "vmulpd            %%ymm6,  %%ymm8,  %%ymm2  \n\t" // scale by gammaCB, ymm2 = ymm6( gammaCB ) * ymm9( ab4_7:0 )
     "vaddpd            %%ymm2,  %%ymm3,  %%ymm2  \n\t" // ymm2 += ymm3
     "vmovapd           %%ymm1,  1 * 32(%%rcx)    \n\t" // and store back to memory: Ca.
     "vmovapd           %%ymm2,  1 * 32(%%rdx)    \n\t" // and store back to memory: Cb.
@@ -357,19 +357,19 @@ void bl_dgemm_asm_8x4_strassen(
 	"addq              %%rdi,   %%rcx            \n\t"
     "addq              %%rdi,   %%rdx            \n\t"
 	"                                            \n\t"
-    "vmovapd    0 * 32(%%rcx),  %%ymm0           \n\t" // ymm0 = Ca( 0:3, 0 )
-    "vmovapd    0 * 32(%%rdx),  %%ymm3           \n\t" // ymm3 = Cb( 0:3, 0 )
-    "vmulpd            %%ymm7,  %%ymm11,  %%ymm1  \n\t" // scale by gammaCA, ymm1 = ymm7( gammaCA ) * ymm9( ab0_3:0 )
+    "vmovapd    0 * 32(%%rcx),  %%ymm0           \n\t" // ymm0 = Ca( 0:3, 1 )
+    "vmovapd    0 * 32(%%rdx),  %%ymm3           \n\t" // ymm3 = Cb( 0:3, 1 )
+    "vmulpd            %%ymm7,  %%ymm11,  %%ymm1  \n\t" // scale by gammaCA, ymm1 = ymm7( gammaCA ) * ymm11( ab0_3:1 )
 	"vaddpd            %%ymm1,  %%ymm0,  %%ymm1  \n\t" // ymm1 += ymm0
-    "vmulpd            %%ymm6,  %%ymm11,  %%ymm2  \n\t" // scale by gammaCB, ymm2 = ymm6( gammaCB ) * ymm9( ab0_3:0 )
+    "vmulpd            %%ymm6,  %%ymm11,  %%ymm2  \n\t" // scale by gammaCB, ymm2 = ymm6( gammaCB ) * ymm9( ab0_3:1 )
     "vaddpd            %%ymm2,  %%ymm3,  %%ymm2  \n\t" // ymm2 += ymm3
     "vmovapd           %%ymm1,  0 * 32(%%rcx)    \n\t" // and store back to memory: Ca.
     "vmovapd           %%ymm2,  0 * 32(%%rdx)    \n\t" // and store back to memory: Cb.
-	"vmovapd    1 * 32(%%rcx),  %%ymm0           \n\t" // ymm0 = Ca( 4:7, 0 )
-    "vmovapd    1 * 32(%%rdx),  %%ymm3           \n\t" // ymm3 = Cb( 4:7, 0 )
-    "vmulpd            %%ymm7,  %%ymm10,  %%ymm1  \n\t" // scale by gammaCA, ymm1 = ymm7( gammaCA ) * ymm9( ab0_3:0 )
-    "vaddpd            %%ymm1,  %%ymm0,  %%ymm1  \n\t" // ymm0 += ymm9
-    "vmulpd            %%ymm6,  %%ymm10,  %%ymm2  \n\t" // scale by gammaCB, ymm2 = ymm6( gammaCB ) * ymm9( ab0_3:0 )
+	"vmovapd    1 * 32(%%rcx),  %%ymm0           \n\t" // ymm0 = Ca( 4:7, 1 )
+    "vmovapd    1 * 32(%%rdx),  %%ymm3           \n\t" // ymm3 = Cb( 4:7, 1 )
+    "vmulpd            %%ymm7,  %%ymm10,  %%ymm1  \n\t" // scale by gammaCA, ymm1 = ymm7( gammaCA ) * ymm9( ab4_7:1 )
+    "vaddpd            %%ymm1,  %%ymm0,  %%ymm1  \n\t" // ymm0 += ymm1
+    "vmulpd            %%ymm6,  %%ymm10,  %%ymm2  \n\t" // scale by gammaCB, ymm2 = ymm6( gammaCB ) * ymm9( ab4_7:1 )
     "vaddpd            %%ymm2,  %%ymm3,  %%ymm2  \n\t" // ymm2 += ymm3
     "vmovapd           %%ymm1,  1 * 32(%%rcx)    \n\t" // and store back to memory: Ca.
     "vmovapd           %%ymm2,  1 * 32(%%rdx)    \n\t" // and store back to memory: Cb.
@@ -377,19 +377,19 @@ void bl_dgemm_asm_8x4_strassen(
 	"addq              %%rdi,   %%rcx            \n\t"
     "addq              %%rdi,   %%rdx            \n\t"
 	"                                            \n\t"
-    "vmovapd    0 * 32(%%rcx),  %%ymm0           \n\t" // ymm0 = Ca( 0:3, 0 )
-    "vmovapd    0 * 32(%%rdx),  %%ymm3           \n\t" // ymm3 = Cb( 0:3, 0 )
-    "vmulpd            %%ymm7,  %%ymm13,  %%ymm1  \n\t" // scale by gammaCA, ymm1 = ymm7( gammaCA ) * ymm9( ab0_3:0 )
+    "vmovapd    0 * 32(%%rcx),  %%ymm0           \n\t" // ymm0 = Ca( 0:3, 2 )
+    "vmovapd    0 * 32(%%rdx),  %%ymm3           \n\t" // ymm3 = Cb( 0:3, 2 )
+    "vmulpd            %%ymm7,  %%ymm13,  %%ymm1  \n\t" // scale by gammaCA, ymm1 = ymm7( gammaCA ) * ymm13( ab4_7:2 )
 	"vaddpd            %%ymm1,  %%ymm0,  %%ymm1  \n\t" // ymm1 += ymm0
-    "vmulpd            %%ymm6,  %%ymm13,  %%ymm2  \n\t" // scale by gammaCB, ymm2 = ymm6( gammaCB ) * ymm9( ab0_3:0 )
+    "vmulpd            %%ymm6,  %%ymm13,  %%ymm2  \n\t" // scale by gammaCB, ymm2 = ymm6( gammaCB ) * ymm13( ab4_7:2 )
     "vaddpd            %%ymm2,  %%ymm3,  %%ymm2  \n\t" // ymm2 += ymm3
     "vmovapd           %%ymm1,  0 * 32(%%rcx)    \n\t" // and store back to memory: Ca.
     "vmovapd           %%ymm2,  0 * 32(%%rdx)    \n\t" // and store back to memory: Cb.
-	"vmovapd    1 * 32(%%rcx),  %%ymm0           \n\t" // ymm0 = Ca( 4:7, 0 )
-    "vmovapd    1 * 32(%%rdx),  %%ymm3           \n\t" // ymm3 = Cb( 4:7, 0 )
-    "vmulpd            %%ymm7,  %%ymm12,  %%ymm1  \n\t" // scale by gammaCA, ymm1 = ymm7( gammaCA ) * ymm9( ab0_3:0 )
-    "vaddpd            %%ymm1,  %%ymm0,  %%ymm1  \n\t" // ymm0 += ymm9
-    "vmulpd            %%ymm6,  %%ymm12,  %%ymm2  \n\t" // scale by gammaCB, ymm2 = ymm6( gammaCB ) * ymm9( ab0_3:0 )
+	"vmovapd    1 * 32(%%rcx),  %%ymm0           \n\t" // ymm0 = Ca( 4:7, 2 )
+    "vmovapd    1 * 32(%%rdx),  %%ymm3           \n\t" // ymm3 = Cb( 4:7, 2 )
+    "vmulpd            %%ymm7,  %%ymm12,  %%ymm1  \n\t" // scale by gammaCA, ymm1 = ymm7( gammaCA ) * ymm12( ab4_7:2 )
+    "vaddpd            %%ymm1,  %%ymm0,  %%ymm1  \n\t" // ymm0 += ymm1
+    "vmulpd            %%ymm6,  %%ymm12,  %%ymm2  \n\t" // scale by gammaCB, ymm2 = ymm6( gammaCB ) * ymm12( ab4_7:2 )
     "vaddpd            %%ymm2,  %%ymm3,  %%ymm2  \n\t" // ymm2 += ymm3
     "vmovapd           %%ymm1,  1 * 32(%%rcx)    \n\t" // and store back to memory: Ca.
     "vmovapd           %%ymm2,  1 * 32(%%rdx)    \n\t" // and store back to memory: Cb.
@@ -397,19 +397,19 @@ void bl_dgemm_asm_8x4_strassen(
 	"addq              %%rdi,   %%rcx            \n\t"
     "addq              %%rdi,   %%rdx            \n\t"
 	"                                            \n\t"
-    "vmovapd    0 * 32(%%rcx),  %%ymm0           \n\t" // ymm0 = Ca( 0:3, 0 )
-    "vmovapd    0 * 32(%%rdx),  %%ymm3           \n\t" // ymm3 = Cb( 0:3, 0 )
-    "vmulpd            %%ymm7,  %%ymm15,  %%ymm1  \n\t" // scale by gammaCA, ymm1 = ymm7( gammaCA ) * ymm9( ab0_3:0 )
+    "vmovapd    0 * 32(%%rcx),  %%ymm0           \n\t" // ymm0 = Ca( 0:3, 3 )
+    "vmovapd    0 * 32(%%rdx),  %%ymm3           \n\t" // ymm3 = Cb( 0:3, 3 )
+    "vmulpd            %%ymm7,  %%ymm15,  %%ymm1  \n\t" // scale by gammaCA, ymm1 = ymm7( gammaCA ) * ymm9( ab0_3:3 )
 	"vaddpd            %%ymm1,  %%ymm0,  %%ymm1  \n\t" // ymm1 += ymm0
-    "vmulpd            %%ymm6,  %%ymm15,  %%ymm2  \n\t" // scale by gammaCB, ymm2 = ymm6( gammaCB ) * ymm9( ab0_3:0 )
+    "vmulpd            %%ymm6,  %%ymm15,  %%ymm2  \n\t" // scale by gammaCB, ymm2 = ymm6( gammaCB ) * ymm9( ab0_3:3 )
     "vaddpd            %%ymm2,  %%ymm3,  %%ymm2  \n\t" // ymm2 += ymm3
     "vmovapd           %%ymm1,  0 * 32(%%rcx)    \n\t" // and store back to memory: Ca.
     "vmovapd           %%ymm2,  0 * 32(%%rdx)    \n\t" // and store back to memory: Cb.
-	"vmovapd    1 * 32(%%rcx),  %%ymm0           \n\t" // ymm0 = Ca( 4:7, 0 )
-    "vmovapd    1 * 32(%%rdx),  %%ymm3           \n\t" // ymm3 = Cb( 4:7, 0 )
-    "vmulpd            %%ymm7,  %%ymm14,  %%ymm1  \n\t" // scale by gammaCA, ymm1 = ymm7( gammaCA ) * ymm9( ab0_3:0 )
-    "vaddpd            %%ymm1,  %%ymm0,  %%ymm1  \n\t" // ymm0 += ymm9
-    "vmulpd            %%ymm6,  %%ymm14,  %%ymm2  \n\t" // scale by gammaCB, ymm2 = ymm6( gammaCB ) * ymm9( ab0_3:0 )
+	"vmovapd    1 * 32(%%rcx),  %%ymm0           \n\t" // ymm0 = Ca( 4:7, 3 )
+    "vmovapd    1 * 32(%%rdx),  %%ymm3           \n\t" // ymm3 = Cb( 4:7, 3 )
+    "vmulpd            %%ymm7,  %%ymm14,  %%ymm1  \n\t" // scale by gammaCA, ymm1 = ymm7( gammaCA ) * ymm14( ab4_7:3 )
+    "vaddpd            %%ymm1,  %%ymm0,  %%ymm1  \n\t" // ymm0 += ymm1
+    "vmulpd            %%ymm6,  %%ymm14,  %%ymm2  \n\t" // scale by gammaCB, ymm2 = ymm6( gammaCB ) * ymm9( ab4_7:3 )
     "vaddpd            %%ymm2,  %%ymm3,  %%ymm2  \n\t" // ymm2 += ymm3
     "vmovapd           %%ymm1,  1 * 32(%%rcx)    \n\t" // and store back to memory: Ca.
     "vmovapd           %%ymm2,  1 * 32(%%rdx)    \n\t" // and store back to memory: Cb.
@@ -430,7 +430,7 @@ void bl_dgemm_asm_8x4_strassen(
 	  "m" (ca),          // 4
 	  "m" (aux->b_next), // 5
       "m" (ldc),         // 6
-      "m" (cb),           // 7
+      "m" (cb),          // 7
       "m" (g1p),         // 8
       "m" (g2p)          // 9
 	: // register clobber list
