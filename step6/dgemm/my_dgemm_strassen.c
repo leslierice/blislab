@@ -226,6 +226,8 @@ void bl_macro_kernel_str(
                 aux.b_next += DGEMM_NR * k;
             }
 
+            if ( gammaCB != 0 ) {
+
             ( *bl_micro_kernel_strassen ) (
                     k,
                     &packA[ i * k ],
@@ -237,6 +239,21 @@ void bl_macro_kernel_str(
                     gammaCB,
                     &aux
                     );
+            } else {
+
+                ( *bl_micro_kernel ) (
+                    k,
+                    &packA[ i * k ],
+                    &packB[ j * k ],
+                    &CA[ j * ldc + i ],
+                    (unsigned long long) ldc,
+                    &aux
+                    );
+
+            }
+
+
+
         }                                                        // 1-th loop around micro-kernel
     }                                                            // 2-th loop around micro-kernel
 }
