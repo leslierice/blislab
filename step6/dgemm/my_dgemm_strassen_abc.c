@@ -47,23 +47,15 @@
 #include <omp.h>
 
 #include "bl_dgemm_kernel.h"
-#include "bl_dsymm.h"
+#include "bl_dgemm.h"
 
-inline void packA_add_mcxkc_d(
+inline void packA_add_mcxkc_d_str_abc(
         int    m,
         int    k,
         double *XAA,
-        int    strucAA,
         double *XAB,
-        int    strucAB,
         int    gamma,
         int    ldXA,
-        int    inc_aa,
-        int    inc_ab,
-        int    ic_aa,
-        int    ic_ab,
-        int    pc_aa,
-        int    pc_ab,
         int    offseta,
         double *packA
         )
@@ -72,65 +64,22 @@ inline void packA_add_mcxkc_d(
     double *aa_pntr[ DGEMM_MR ];
     double *ab_pntr[ DGEMM_MR ];
 
-    int diff_aa = ic_aa - pc_aa;
-    int off_aa = diff_aa - offseta + 1;
-    int diff_ab = ic_ab - pc_ab;
-    int off_ab = diff_ab - offseta + 1;
-
-    if ( strucAA == BL_TRANS_SYMM ) {
-        for ( i = 0; i < min( m, off_aa ); i ++ ) {
-            aa_pntr[ i ] = XAA + ldXA * ( offseta + i );
-        }
-
-        for ( i = min( m, off_aa ); i < m; i ++ ) {
-            aa_pntr[ i ] = XAA + inc_aa * ( offseta + i - diff_aa ) + ldXA * diff_aa;
-        }
+    for ( i = 0; i < m; i ++ ) {
+        aa_pntr[ i ] = XAA + ( offseta + i );
+        ab_pntr[ i ] = XAB + ( offseta + i );
     }
-    else {
-        for ( i = 0; i < m; i ++ ) {
-            aa_pntr[ i ] = XAA + inc_aa * ( offseta + i );
-        }
 
-        for ( i = m; i < DGEMM_MR; i ++ ) {
-            aa_pntr[ i ] = XAA + inc_aa * ( offseta + 0 );
-        }
-    }
-    if ( strucAB == BL_TRANS_SYMM ) {
-        for ( i = 0; i < min( m, off_ab ); i ++ ) {
-            ab_pntr[ i ] = XAB + ldXA * ( offseta + i );
-        }
-
-        for ( i = min( m, off_ab ); i < m; i ++ ) {
-            ab_pntr[ i ] = XAB + inc_ab * ( offseta + i - diff_ab ) + ldXA * diff_ab;
-        }
-    }
-    else {
-        for ( i = 0; i < m; i ++ ) {
-            ab_pntr[ i ] = XAB + inc_ab * ( offseta + i );
-        }
-
-        for ( i = m; i < DGEMM_MR; i ++ ) {
-            ab_pntr[ i ] = XAB + inc_ab * ( offseta + 0 );
-        }
+    for ( i = m; i < DGEMM_MR; i ++ ) {
+        aa_pntr[ i ] = XAA + ( offseta + 0 );
+        ab_pntr[ i ] = XAB + ( offseta + 0 );
     }
 
     for ( p = 0; p < k; p ++ ) {
         for ( i = 0; i < DGEMM_MR; i ++ ) {
             *packA = *aa_pntr[ i ] + gamma * *ab_pntr[ i ];
             packA ++;
-
-            if ( strucAA == BL_TRANS || ( strucAA == BL_SYMM && ( ic_aa + offseta + i <= pc_aa + p ) ) || ( strucAA == BL_TRANS_SYMM && i - p <= diff_aa ) ) {
-                aa_pntr[ i ] ++;
-            }
-            else {
-                aa_pntr[ i ] = aa_pntr[ i ] + ldXA;
-            }
-            if ( strucAB == BL_TRANS || ( strucAB == BL_SYMM && ( ic_ab + offseta + i <= pc_ab + p ) ) || ( strucAB == BL_TRANS_SYMM && i - p <= diff_ab ) ) {
-                ab_pntr[ i ] ++;
-            }
-            else {
-                ab_pntr[ i ] = ab_pntr[ i ] + ldXA;
-            }
+            aa_pntr[ i ] = aa_pntr[ i ] + ldXA;
+            ab_pntr[ i ] = ab_pntr[ i ] + ldXA;
         }
     }
 }
@@ -140,15 +89,11 @@ inline void packA_add_mcxkc_d(
  * --------------------------------------------------------------------------
  */
 
-inline void packA_mcxkc_d_str(
+inline void packA_mcxkc_d_str_abc(
         int    m,
         int    k,
         double *XA,
-        int    struc,
         int    ldXA,
-        int    inc,
-        int    ic,
-        int    pc,
         int    offseta,
         double *packA
         )
@@ -156,39 +101,19 @@ inline void packA_mcxkc_d_str(
     int    i, p;
     double *a_pntr[ DGEMM_MR ];
 
-    int diff = ic - pc;
-    int off = diff - offseta + 1;
-
-    if ( struc == BL_TRANS_SYMM ) {
-        for ( i = 0; i < min( m, off ); i ++ ) {
-            a_pntr[ i ] = XA + ldXA * ( offseta + i );
-        }
-
-        for ( i = min( m, off ); i < m; i ++ ) {
-            a_pntr[ i ] = XA + inc * ( offseta + i - diff ) + ldXA * diff;
-        }
+    for ( i = 0; i < m; i ++ ) {
+        a_pntr[ i ] = XA + ( offseta + i );
     }
-    else {
-        for ( i = 0; i < m; i ++ ) {
-            a_pntr[ i ] = XA + inc * ( offseta + i );
-        }
 
-        for ( i = m; i < DGEMM_MR; i ++ ) {
-            a_pntr[ i ] = XA + inc * ( offseta + 0 );
-        }
+    for ( i = m; i < DGEMM_MR; i ++ ) {
+        a_pntr[ i ] = XA + ( offseta + 0 );
     }
 
     for ( p = 0; p < k; p ++ ) {
         for ( i = 0; i < DGEMM_MR; i ++ ) {
             *packA = *a_pntr[ i ];
             packA ++;
-
-            if ( struc == BL_TRANS || ( struc == BL_SYMM && ( ic + offseta + i <= pc + p ) ) || ( struc == BL_TRANS_SYMM && i - p <= diff ) ) {
-                a_pntr[ i ] = a_pntr[ i ] ++;
-            }
-            else {
-                a_pntr[ i ] = a_pntr[ i ] + ldXA;
-            }
+            a_pntr[ i ] = a_pntr[ i ] + ldXA;
         }
     }
 }
@@ -197,7 +122,7 @@ inline void packA_mcxkc_d_str(
  * --------------------------------------------------------------------------
  */
 
-inline void packB_add_kcxnc_d(
+inline void packB_add_kcxnc_d_str_abc(
         int    n,
         int    k,
         double *XBA,
@@ -233,7 +158,7 @@ inline void packB_add_kcxnc_d(
  * --------------------------------------------------------------------------
  */
 
-inline void packB_kcxnc_d_str(
+inline void packB_kcxnc_d_str_abc(
         int    n,
         int    k,
         double *XB,
@@ -264,7 +189,7 @@ inline void packB_kcxnc_d_str(
  * --------------------------------------------------------------------------
  */
 
-void bl_macro_kernel_str(
+void bl_macro_kernel_str_abc(
         int    m,
         int    n,
         int    k,
@@ -302,29 +227,33 @@ void bl_macro_kernel_str(
             }
 
             if ( gammaCB != 0 ) {
-                ( *bl_micro_kernel_strassen ) (
-                        k,
-                        &packA[ i * k ],
-                        &packB[ j * k ],
-                        &CA[ j * ldc + i ],
-                        &CB[ j * ldc + i ],
-                        (unsigned long long) ldc,
-                        gammaCA,
-                        gammaCB,
-                        &aux
-                        );
+
+            ( *bl_micro_kernel_strassen ) (
+                    k,
+                    &packA[ i * k ],
+                    &packB[ j * k ],
+                    &CA[ j * ldc + i ],
+                    &CB[ j * ldc + i ],
+                    (unsigned long long) ldc,
+                    gammaCA,
+                    gammaCB,
+                    &aux
+                    );
+            } else {
+
+                ( *bl_micro_kernel ) (
+                    k,
+                    &packA[ i * k ],
+                    &packB[ j * k ],
+                    &CA[ j * ldc + i ],
+                    (unsigned long long) ldc,
+                    &aux
+                    );
+
             }
 
-            else {
-                ( *bl_micro_kernel ) (
-                        k,
-                        &packA[ i * k ],
-                        &packB[ j * k ],
-                        &CA[ j * ldc + i ],
-                        (unsigned long long) ldc,
-                        &aux
-                );
-            }
+
+
         }                                                        // 1-th loop around micro-kernel
     }                                                            // 2-th loop around micro-kernel
 }
@@ -334,14 +263,12 @@ void bl_macro_kernel_str(
  */
 
 // C must be aligned
-void bl_dsymm_str(
+void bl_dgemm_str_abc(
         int    m,
         int    n,
         int    k,
         double *XAA,
-        int    strucAA,
         double *XAB,
-        int    strucAB,
         double *packA,
         int    lda,
         int    gammaA,
@@ -360,10 +287,7 @@ void bl_dsymm_str(
 {
     int    i, j, p;
     int    ic, ib, jc, jb, pc, pb;
-    int    ic_aa, ic_ab, pc_aa, pc_ab;
     int    ir, jr;
-    int    inc_aa, inc_ab;
-    int    strucAA_p, strucAB_p;
 
     for ( jc = 0; jc < n; jc += DGEMM_NC ) {                                       // 5-th loop around micro-kernel
         jb = min( n - jc, DGEMM_NC );
@@ -373,7 +297,7 @@ void bl_dsymm_str(
             #pragma omp parallel for num_threads( bl_ic_nt ) private( jr )
             for ( j = 0; j < jb; j += DGEMM_NR ) {
                 if ( gammaB == 0 ) {
-                    packB_kcxnc_d_str(
+                    packB_kcxnc_d_str_abc(
                             min( jb - j, DGEMM_NR ),
                             pb,
                             &XBA[ pc ],
@@ -383,7 +307,7 @@ void bl_dsymm_str(
                             );
                 }
                 else {
-                    packB_add_kcxnc_d(
+                    packB_add_kcxnc_d_str_abc(
                             min( jb - j, DGEMM_NR ),
                             pb,
                             &XBA[ pc ],
@@ -397,7 +321,7 @@ void bl_dsymm_str(
             }
 
             //#pragma omp parallel for num_threads( bl_ic_nt ) private( ic, ib, i, ir )
-            #pragma omp parallel num_threads( bl_ic_nt ) private( ic, ib, i, ir, ic_aa, pc_aa, inc_aa, strucAA_p, ic_ab, pc_ab, inc_ab, strucAB_p )
+            #pragma omp parallel num_threads( bl_ic_nt ) private( ic, ib, i, ir )
             {
                 int     tid      = omp_get_thread_num();
                 int     my_start;
@@ -409,103 +333,33 @@ void bl_dsymm_str(
 
                     ib = min( my_end - ic, DGEMM_MC );
 
-                    ic_aa = ic;
-                    pc_aa = pc;
-                    inc_aa = 1;
-                    strucAA_p = strucAA;
-
-                    if ( strucAA == BL_TRANS ) {
-                        inc_aa = lda;
-                        if ( pc != ic ) {
-                            ic_aa = pc;
-                            pc_aa = ic;
-                        }
-                    }
-                    else if ( strucAA == BL_SYMM && pc > ic ) {
-                        ic_aa = pc;
-                        pc_aa = ic;
-                        if (ic_aa - pc_aa <= DGEMM_MC) {
-                            strucAA_p = BL_TRANS_SYMM;
-                        }
-                        else{
-                            strucAA_p = BL_TRANS;
-                            inc_aa = lda;
-                        }
-
-                    }
-
-                    ic_ab = ic;
-                    pc_ab = pc;
-                    inc_ab = 1;
-                    strucAB_p = strucAB;
-
-                    if ( strucAB == BL_TRANS ) {
-                        inc_ab = lda;
-                        if ( pc != ic ) {
-                            ic_ab = pc;
-                            pc_ab = ic;
-                        }
-                    }
-                    else if ( strucAB == BL_SYMM && pc > ic ) {
-                        ic_ab = pc;
-                        pc_ab = ic;
-                        if (ic_ab - pc_ab <= DGEMM_MC) {
-                            strucAB_p = BL_TRANS_SYMM;
-                        }
-                        else{
-                            strucAB_p = BL_TRANS;
-                            inc_ab = lda;
-                        }
-                    }
-
                     for ( i = 0; i < ib; i += DGEMM_MR ) {
-                        if ( strucAA_p == BL_TRANS_SYMM && i >= ic_aa - pc_aa )  {
-                            strucAA_p = BL_SYMM;
-                            ic_aa = ic;
-                            pc_aa = pc;
-                        }
-                        if ( strucAB_p == BL_TRANS_SYMM && i >= ic_ab - pc_ab )  {
-                            strucAB_p = BL_SYMM;
-                            ic_ab = ic;
-                            pc_ab = pc;
-                        }
                         if ( gammaA == 0 ) {
-                            packA_mcxkc_d_str(
+                            packA_mcxkc_d_str_abc(
                                     min( ib - i, DGEMM_MR ),
                                     pb,
-                                    &XAA[ pc_aa * lda + ic_aa ],
-                                    strucAA_p,
+                                    &XAA[ pc * lda ],
                                     lda,
-                                    inc_aa,
-                                    ic_aa,
-                                    pc_aa,
-                                    i,
+                                    ic + i,
                                     &packA[ tid * DGEMM_MC * pb + i * pb ]
                                     );
                         }
                         else {
-                            packA_add_mcxkc_d(
+                            packA_add_mcxkc_d_str_abc(
                                     min( ib - i, DGEMM_MR ),
                                     pb,
-                                    &XAA[ pc_aa * lda + ic_aa ],
-                                    strucAA_p,
-                                    &XAB[ pc_ab * lda + ic_ab ],
-                                    strucAB_p,
+                                    &XAA[ pc * lda ],
+                                    &XAB[ pc * lda ],
                                     gammaA,
                                     lda,
-                                    inc_aa,
-                                    inc_ab,
-                                    ic_aa,
-                                    ic_ab,
-                                    pc_aa,
-                                    pc_ab,
-                                    i,
+                                    ic + i,
                                     &packA[ tid * DGEMM_MC * pb + i * pb ]
                                     );
                         }
+
                     }
 
-                    bl_macro_kernel_str(
+                    bl_macro_kernel_str_abc(
                             ib,
                             jb,
                             pb,
@@ -529,7 +383,7 @@ void bl_dsymm_str(
  * --------------------------------------------------------------------------
  */
 
-void bl_dsymm_strassen(
+void bl_dgemm_strassen_abc(
         int m,
         int n,
         int k,
@@ -565,13 +419,13 @@ void bl_dsymm_strassen(
     packA  = bl_malloc_aligned( DGEMM_KC, ( DGEMM_MC + 1 ) * bl_ic_nt, sizeof(double) );
     packB  = bl_malloc_aligned( DGEMM_KC, ( DGEMM_NC + 1 )           , sizeof(double) );
 
-    bl_dsymm_str(ms, ns, ks, &XA[ 0 ], BL_SYMM, &XA[ ms + lda * ks ], BL_SYMM, packA, lda, 1, &XB[ 0 ], &XB[ ks + ldb * ns ], packB, ldb, 1, &C[ 0 ], &C[ ms + ldc * ns ], ldc, 1, 1, bl_ic_nt);
-    bl_dsymm_str(ms, ns, ks, &XA[ ms ], BL_GEN, &XA[ ms + lda * ks ], BL_SYMM, packA, lda, 1, &XB[ 0 ], &XB[ 0 ], packB, ldb, 0, &C[ ms ], &C[ ms + ldc * ns ], ldc, 1, -1, bl_ic_nt);
-    bl_dsymm_str(ms, ns, ks, &XA[ 0 ], BL_SYMM, &XA[ 0 ], BL_SYMM, packA, lda, 0, &XB[ ldb * ns ], &XB[ ks + ldb * ns ], packB, ldb, -1, &C[ ldc * ns ], &C[ ms + ldc * ns ], ldc, 1, 1, bl_ic_nt);
-    bl_dsymm_str(ms, ns, ks, &XA[ ms + lda * ns ], BL_SYMM, &XA[ 0 ], BL_SYMM, packA, lda, 0, &XB[ ks ], &XB[ 0 ], packB, ldb, -1, &C[ 0 ], &C[ ms ], ldc, 1, 1, bl_ic_nt);
-    bl_dsymm_str(ms, ns, ks, &XA[ 0 ], BL_SYMM, &XA[ ms ], BL_TRANS, packA, lda, 1, &XB[ ks + ldb * ns ], &XB[ 0 ], packB, ldb, 0, &C[ ldc * ns ], &C[ 0 ], ldc, 1, -1, bl_ic_nt);
-    bl_dsymm_str(ms, ns, ks, &XA[ ms ], BL_GEN, &XA[ 0 ], BL_SYMM, packA, lda, -1, &XB[ 0 ], &XB[ ldb * ns ], packB, ldb, 1, &C[ ms + ldc * ns ], &C[ 0 ], ldc, 1, 0, bl_ic_nt);
-    bl_dsymm_str(ms, ns, ks, &XA[ ms ], BL_TRANS, &XA[ ms + lda * ks ], BL_SYMM, packA, lda, -1, &XB[ ks ], &XB[ ks + ldb * ns ], packB, ldb, 1, &C[ 0 ], &C[ 0 ], ldc, 1, 0, bl_ic_nt);
+    bl_dgemm_str_abc(ms, ns, ks, &XA[ 0 ], &XA[ ms + lda * ks ], packA, lda, 1, &XB[ 0 ], &XB[ ks + ldb * ns ], packB, ldb, 1, &C[ 0 ], &C[ ms + ldc * ns ], ldc, 1, 1, bl_ic_nt);
+    bl_dgemm_str_abc(ms, ns, ks, &XA[ ms ], &XA[ ms + lda * ks ], packA, lda, 1, &XB[ 0 ], &XB[ 0 ], packB, ldb, 0, &C[ ms ], &C[ ms + ldc * ns ], ldc, 1, -1, bl_ic_nt);
+    bl_dgemm_str_abc(ms, ns, ks, &XA[ 0 ], &XA[ 0 ], packA, lda, 0, &XB[ ldb * ns ], &XB[ ks + ldb * ns ], packB, ldb, -1, &C[ ldc * ns ], &C[ ms + ldc * ns ], ldc, 1, 1, bl_ic_nt);
+    bl_dgemm_str_abc(ms, ns, ks, &XA[ ms + lda * ns ], &XA[ 0 ], packA, lda, 0, &XB[ ks ], &XB[ 0 ], packB, ldb, -1, &C[ 0 ], &C[ ms ], ldc, 1, 1, bl_ic_nt);
+    bl_dgemm_str_abc(ms, ns, ks, &XA[ 0 ], &XA[ lda * ks ], packA, lda, 1, &XB[ ks + ldb * ns ], &XB[ 0 ], packB, ldb, 0, &C[ ldc * ns ], &C[ 0 ], ldc, 1, -1, bl_ic_nt);
+    bl_dgemm_str_abc(ms, ns, ks, &XA[ ms ], &XA[ 0 ], packA, lda, -1, &XB[ 0 ], &XB[ ldb * ns ], packB, ldb, 1, &C[ ms + ldc * ns ], &C[ 0 ], ldc, 1, 0, bl_ic_nt);
+    bl_dgemm_str_abc(ms, ns, ks, &XA[ lda * ks ], &XA[ ms + lda * ks ], packA, lda, -1, &XB[ ks ], &XB[ ks + ldb * ns ], packB, ldb, 1, &C[ 0 ], &C[ 0 ], ldc, 1, 0, bl_ic_nt);
 
     free( packA );
     free( packB );

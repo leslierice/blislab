@@ -102,7 +102,19 @@ extern "C" {
 #define C_ref( i, j ) C_ref[ (j)*ldc_ref + (i) ]
 #define C( i, j )     C[ (j)*ldc + (i) ]
 
-void bl_dgemm_strassen(
+void bl_dgemm_strassen_abc(
+        int    m,
+        int    n,
+        int    k,
+        double *A,
+        int    lda,
+        double *B,
+        int    ldb,
+        double *C,
+        int    ldc
+        );
+
+void bl_dgemm_strassen_ab(
         int    m,
         int    n,
         int    k,

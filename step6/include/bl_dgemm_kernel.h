@@ -91,16 +91,6 @@ void bl_dgemm_asm_8x4( int k,
         unsigned long long ldc,
         aux_t* data );
 
-void bl_dgemm_asm_4x4_strassen( int k,
-        double *a,
-        double *b,
-        double *ca,
-        double *cb,
-        unsigned long long ldc,
-        int gammaCA,
-        int gammaCB,
-        aux_t* data );
-
 void bl_dgemm_asm_8x4_strassen( int k,
         double *a,
         double *b,

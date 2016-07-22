@@ -49,7 +49,7 @@
 #include "bl_dgemm_kernel.h"
 #include "bl_dgemm.h"
 
-inline void packA_add_mcxkc_d_str(
+inline void packA_add_mcxkc_d_str_ab(
         int    m,
         int    k,
         double *XAA,
@@ -89,7 +89,7 @@ inline void packA_add_mcxkc_d_str(
  * --------------------------------------------------------------------------
  */
 
-inline void packA_mcxkc_d_str(
+inline void packA_mcxkc_d_str_ab(
         int    m,
         int    k,
         double *XA,
@@ -122,7 +122,7 @@ inline void packA_mcxkc_d_str(
  * --------------------------------------------------------------------------
  */
 
-inline void packB_add_kcxnc_d_str(
+inline void packB_add_kcxnc_d_str_ab(
         int    n,
         int    k,
         double *XBA,
@@ -158,7 +158,7 @@ inline void packB_add_kcxnc_d_str(
  * --------------------------------------------------------------------------
  */
 
-inline void packB_kcxnc_d_str(
+inline void packB_kcxnc_d_str_ab(
         int    n,
         int    k,
         double *XB,
@@ -189,7 +189,7 @@ inline void packB_kcxnc_d_str(
  * --------------------------------------------------------------------------
  */
 
-void bl_macro_kernel_str(
+void bl_macro_kernel_str_ab(
         int    m,
         int    n,
         int    k,
@@ -226,8 +226,6 @@ void bl_macro_kernel_str(
                 aux.b_next += DGEMM_NR * k;
             }
 
-            if ( gammaCB != 0 ) {
-
             ( *bl_micro_kernel_strassen ) (
                     k,
                     &packA[ i * k ],
@@ -236,22 +234,9 @@ void bl_macro_kernel_str(
                     &CB[ j * ldc + i ],
                     (unsigned long long) ldc,
                     gammaCA,
-                    gammaCB,
+                    0,
                     &aux
                     );
-            } else {
-
-                ( *bl_micro_kernel ) (
-                    k,
-                    &packA[ i * k ],
-                    &packB[ j * k ],
-                    &CA[ j * ldc + i ],
-                    (unsigned long long) ldc,
-                    &aux
-                    );
-
-            }
-
 
 
         }                                                        // 1-th loop around micro-kernel
@@ -263,7 +248,7 @@ void bl_macro_kernel_str(
  */
 
 // C must be aligned
-void bl_dgemm_str(
+void bl_dgemm_str_ab(
         int    m,
         int    n,
         int    k,
@@ -297,7 +282,7 @@ void bl_dgemm_str(
             #pragma omp parallel for num_threads( bl_ic_nt ) private( jr )
             for ( j = 0; j < jb; j += DGEMM_NR ) {
                 if ( gammaB == 0 ) {
-                    packB_kcxnc_d_str(
+                    packB_kcxnc_d_str_ab(
                             min( jb - j, DGEMM_NR ),
                             pb,
                             &XBA[ pc ],
@@ -307,7 +292,7 @@ void bl_dgemm_str(
                             );
                 }
                 else {
-                    packB_add_kcxnc_d_str(
+                    packB_add_kcxnc_d_str_ab(
                             min( jb - j, DGEMM_NR ),
                             pb,
                             &XBA[ pc ],
@@ -335,7 +320,7 @@ void bl_dgemm_str(
 
                     for ( i = 0; i < ib; i += DGEMM_MR ) {
                         if ( gammaA == 0 ) {
-                            packA_mcxkc_d_str(
+                            packA_mcxkc_d_str_ab(
                                     min( ib - i, DGEMM_MR ),
                                     pb,
                                     &XAA[ pc * lda ],
@@ -345,7 +330,7 @@ void bl_dgemm_str(
                                     );
                         }
                         else {
-                            packA_add_mcxkc_d_str(
+                            packA_add_mcxkc_d_str_ab(
                                     min( ib - i, DGEMM_MR ),
                                     pb,
                                     &XAA[ pc * lda ],
@@ -359,7 +344,7 @@ void bl_dgemm_str(
 
                     }
 
-                    bl_macro_kernel_str(
+                    bl_macro_kernel_str_ab(
                             ib,
                             jb,
                             pb,
@@ -383,7 +368,7 @@ void bl_dgemm_str(
  * --------------------------------------------------------------------------
  */
 
-void bl_dgemm_strassen(
+void bl_dgemm_strassen_ab(
         int m,
         int n,
         int k,
@@ -419,13 +404,13 @@ void bl_dgemm_strassen(
     packA  = bl_malloc_aligned( DGEMM_KC, ( DGEMM_MC + 1 ) * bl_ic_nt, sizeof(double) );
     packB  = bl_malloc_aligned( DGEMM_KC, ( DGEMM_NC + 1 )           , sizeof(double) );
 
-    bl_dgemm_str(ms, ns, ks, &XA[ 0 ], &XA[ ms + lda * ks ], packA, lda, 1, &XB[ 0 ], &XB[ ks + ldb * ns ], packB, ldb, 1, &C[ 0 ], &C[ ms + ldc * ns ], ldc, 1, 1, bl_ic_nt);
-    bl_dgemm_str(ms, ns, ks, &XA[ ms ], &XA[ ms + lda * ks ], packA, lda, 1, &XB[ 0 ], &XB[ 0 ], packB, ldb, 0, &C[ ms ], &C[ ms + ldc * ns ], ldc, 1, -1, bl_ic_nt);
-    bl_dgemm_str(ms, ns, ks, &XA[ 0 ], &XA[ 0 ], packA, lda, 0, &XB[ ldb * ns ], &XB[ ks + ldb * ns ], packB, ldb, -1, &C[ ldc * ns ], &C[ ms + ldc * ns ], ldc, 1, 1, bl_ic_nt);
-    bl_dgemm_str(ms, ns, ks, &XA[ ms + lda * ns ], &XA[ 0 ], packA, lda, 0, &XB[ ks ], &XB[ 0 ], packB, ldb, -1, &C[ 0 ], &C[ ms ], ldc, 1, 1, bl_ic_nt);
-    bl_dgemm_str(ms, ns, ks, &XA[ 0 ], &XA[ lda * ks ], packA, lda, 1, &XB[ ks + ldb * ns ], &XB[ 0 ], packB, ldb, 0, &C[ ldc * ns ], &C[ 0 ], ldc, 1, -1, bl_ic_nt);
-    bl_dgemm_str(ms, ns, ks, &XA[ ms ], &XA[ 0 ], packA, lda, -1, &XB[ 0 ], &XB[ ldb * ns ], packB, ldb, 1, &C[ ms + ldc * ns ], &C[ 0 ], ldc, 1, 0, bl_ic_nt);
-    bl_dgemm_str(ms, ns, ks, &XA[ lda * ks ], &XA[ ms + lda * ks ], packA, lda, -1, &XB[ ks ], &XB[ ks + ldb * ns ], packB, ldb, 1, &C[ 0 ], &C[ 0 ], ldc, 1, 0, bl_ic_nt);
+    bl_dgemm_str_ab(ms, ns, ks, &XA[ 0 ], &XA[ ms + lda * ks ], packA, lda, 1, &XB[ 0 ], &XB[ ks + ldb * ns ], packB, ldb, 1, &C[ 0 ], &C[ ms + ldc * ns ], ldc, 1, 1, bl_ic_nt);
+    bl_dgemm_str_ab(ms, ns, ks, &XA[ ms ], &XA[ ms + lda * ks ], packA, lda, 1, &XB[ 0 ], &XB[ 0 ], packB, ldb, 0, &C[ ms ], &C[ ms + ldc * ns ], ldc, 1, -1, bl_ic_nt);
+    bl_dgemm_str_ab(ms, ns, ks, &XA[ 0 ], &XA[ 0 ], packA, lda, 0, &XB[ ldb * ns ], &XB[ ks + ldb * ns ], packB, ldb, -1, &C[ ldc * ns ], &C[ ms + ldc * ns ], ldc, 1, 1, bl_ic_nt);
+    bl_dgemm_str_ab(ms, ns, ks, &XA[ ms + lda * ns ], &XA[ 0 ], packA, lda, 0, &XB[ ks ], &XB[ 0 ], packB, ldb, -1, &C[ 0 ], &C[ ms ], ldc, 1, 1, bl_ic_nt);
+    bl_dgemm_str_ab(ms, ns, ks, &XA[ 0 ], &XA[ lda * ks ], packA, lda, 1, &XB[ ks + ldb * ns ], &XB[ 0 ], packB, ldb, 0, &C[ ldc * ns ], &C[ 0 ], ldc, 1, -1, bl_ic_nt);
+    bl_dgemm_str_ab(ms, ns, ks, &XA[ ms ], &XA[ 0 ], packA, lda, -1, &XB[ 0 ], &XB[ ldb * ns ], packB, ldb, 1, &C[ ms + ldc * ns ], &C[ 0 ], ldc, 1, 0, bl_ic_nt);
+    bl_dgemm_str_ab(ms, ns, ks, &XA[ lda * ks ], &XA[ ms + lda * ks ], packA, lda, -1, &XB[ ks ], &XB[ ks + ldb * ns ], packB, ldb, 1, &C[ 0 ], &C[ 0 ], ldc, 1, 0, bl_ic_nt);
 
     free( packA );
     free( packB );
