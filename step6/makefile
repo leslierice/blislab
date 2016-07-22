@@ -12,6 +12,7 @@ FRAME_CC_SRC=  \
 							 dgemm/my_dgemm.c \
 							 dgemm/my_dgemm_strassen_abc.c \
 							 dgemm/my_dgemm_strassen_ab.c \
+							 dgemm/my_dgemm_strassen_naive.c \
 							 dgemm/bl_dgemm_ref.c \
 							 dgemm/bl_dgemm_util.c \
 

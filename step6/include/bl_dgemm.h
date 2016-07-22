@@ -102,6 +102,18 @@ extern "C" {
 #define C_ref( i, j ) C_ref[ (j)*ldc_ref + (i) ]
 #define C( i, j )     C[ (j)*ldc + (i) ]
 
+void bl_dgemm_strassen(
+        int    m,
+        int    n,
+        int    k,
+        double *A,
+        int    lda,
+        double *B,
+        int    ldb,
+        double *C,
+        int    ldc
+        );
+
 void bl_dgemm_strassen_abc(
         int    m,
         int    n,
@@ -126,15 +138,35 @@ void bl_dgemm_strassen_ab(
         int    ldc
         );
 
+void bl_dgemm_strassen_naive(
+        int    m,
+        int    n,
+        int    k,
+        double *A,
+        int    lda,
+        double *B,
+        int    ldb,
+        double *C,
+        int    ldc
+        );
+
+// XB = XA
+void mkl_copym(
+    int m,
+    int n,
+    double *XA,
+    double *XB,
+    int ldc
+    );
+
 // XB = XB + alpha * XA
 void mkl_axpym(
         int m,
         int n,
         double *buf_alpha,
         double *XA,
-        int lda,
         double *XB,
-        int ldb
+        int ldc
         );
 
 double *bl_malloc_aligned(
