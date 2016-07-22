@@ -6,6 +6,7 @@ endif
 
 $(info * Using CFLAGS=${CFLAGS})
 $(info * Using LDFLAGS=${LDFLAGS})
+$(info * Using LDFLAGS=${LDLIBS})
 
 FRAME_CC_SRC=  \
 							 dgemm/my_dgemm.c \

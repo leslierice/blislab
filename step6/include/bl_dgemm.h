@@ -126,6 +126,17 @@ void bl_dgemm_strassen_ab(
         int    ldc
         );
 
+// XB = XB + alpha * XA
+void mkl_axpym(
+        int m,
+        int n,
+        double *buf_alpha,
+        double *XA,
+        int lda,
+        double *XB,
+        int ldb
+        );
+
 double *bl_malloc_aligned(
         int    m,
         int    n,
