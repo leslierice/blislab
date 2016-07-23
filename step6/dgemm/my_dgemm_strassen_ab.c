@@ -54,7 +54,7 @@ inline void packA_add_mcxkc_d_str_ab(
         int    k,
         double *XAA,
         double *XAB,
-        int    gamma,
+        double gamma,
         int    ldXA,
         int    offseta,
         double *packA
@@ -127,7 +127,7 @@ inline void packB_add_kcxnc_d_str_ab(
         int    k,
         double *XBA,
         double *XBB,
-        int    gamma,
+        double gamma,
         int    ldXB, // ldXB is the original k
         int    offsetb,
         double *packB
@@ -197,10 +197,9 @@ void bl_macro_kernel_str_ab(
         double *packB,
         double *CA,
         double *CB,
-        double *cTemp,
         int    ldc,
-        int    gammaCA,
-        int    gammaCB
+        double gammaCA,
+        double gammaCB
         )
 {
     int bl_ic_nt;
@@ -227,18 +226,26 @@ void bl_macro_kernel_str_ab(
                 aux.b_next += DGEMM_NR * k;
             }
 
+            double *c_tmp = calloc( aux.m * aux.n * k, sizeof(double) );
+
             ( *bl_micro_kernel_strassen ) (
                     k,
                     &packA[ i * k ],
                     &packB[ j * k ],
-                    &cTemp[ j * ldc + i ],
-                    &CB[ 0 ],
-                    (unsigned long long) ldc,
+                    c_tmp,
+                    CB,
+                    (unsigned long long) aux.m,
                     gammaCA,
                     0,
                     &aux
                     );
 
+            mkl_axpym( aux.m, aux.n, &gammaCA, c_tmp, aux.m, &CA[ j * ldc + i ], ldc );
+            if ( gammaCB != 0 ) {
+                mkl_axpym( aux.m, aux.n, &gammaCB, c_tmp, aux.m, &CB[ j * ldc + i ], ldc );
+            }
+
+            free( c_tmp );
 
         }                                                        // 1-th loop around micro-kernel
     }                                                            // 2-th loop around micro-kernel
@@ -257,18 +264,17 @@ void bl_dgemm_str_ab(
         double *XAB,
         double *packA,
         int    lda,
-        int    gammaA,
+        double gammaA,
         double *XBA,
         double *XBB,
         double *packB,
         int    ldb,
-        int    gammaB,
+        double gammaB,
         double *CA,        // must be aligned
         double *CB,
-        double *cTemp,
         int    ldc,        // ldc must also be aligned
-        int    gammaCA,
-        int    gammaCB,
+        double gammaCA,
+        double gammaCB,
         int    bl_ic_nt
         )
 {
@@ -354,7 +360,6 @@ void bl_dgemm_str_ab(
                             packB,
                             &CA[ jc * ldc + ic ],
                             &CB[ jc * ldc + ic ],
-                            &cTemp[ jc * ldc + ic ],
                             ldc,
                             gammaCA,
                             gammaCB
@@ -384,7 +389,6 @@ void bl_dgemm_strassen_ab(
         )
 {
     double *packA, *packB;
-    double *cTemp;
     char   *str;
     int bl_ic_nt;
 
@@ -408,19 +412,16 @@ void bl_dgemm_strassen_ab(
     packA  = bl_malloc_aligned( DGEMM_KC, ( DGEMM_MC + 1 ) * bl_ic_nt, sizeof(double) );
     packB  = bl_malloc_aligned( DGEMM_KC, ( DGEMM_NC + 1 )           , sizeof(double) );
 
-    cTemp = calloc( m * n, sizeof(double) );
-
-    bl_dgemm_str_ab(ms, ns, ks, &XA[ 0 ], &XA[ ms + lda * ks ], packA, lda, 1, &XB[ 0 ], &XB[ ks + ldb * ns ], packB, ldb, 1, &C[ 0 ], &C[ ms + ldc * ns ], cTemp, ldc, 1, 1, bl_ic_nt);
-    bl_dgemm_str_ab(ms, ns, ks, &XA[ ms ], &XA[ ms + lda * ks ], packA, lda, 1, &XB[ 0 ], &XB[ 0 ], packB, ldb, 0, &C[ ms ], &C[ ms + ldc * ns ], cTemp, ldc, 1, -1, bl_ic_nt);
-    bl_dgemm_str_ab(ms, ns, ks, &XA[ 0 ], &XA[ 0 ], packA, lda, 0, &XB[ ldb * ns ], &XB[ ks + ldb * ns ], packB, ldb, -1, &C[ ldc * ns ], &C[ ms + ldc * ns ], cTemp, ldc, 1, 1, bl_ic_nt);
-    bl_dgemm_str_ab(ms, ns, ks, &XA[ ms + lda * ns ], &XA[ 0 ], packA, lda, 0, &XB[ ks ], &XB[ 0 ], packB, ldb, -1, &C[ 0 ], &C[ ms ], cTemp, ldc, 1, 1, bl_ic_nt);
-    bl_dgemm_str_ab(ms, ns, ks, &XA[ 0 ], &XA[ lda * ks ], packA, lda, 1, &XB[ ks + ldb * ns ], &XB[ 0 ], packB, ldb, 0, &C[ ldc * ns ], &C[ 0 ], cTemp, ldc, 1, -1, bl_ic_nt);
-    bl_dgemm_str_ab(ms, ns, ks, &XA[ ms ], &XA[ 0 ], packA, lda, -1, &XB[ 0 ], &XB[ ldb * ns ], packB, ldb, 1, &C[ ms + ldc * ns ], &C[ 0 ], cTemp, ldc, 1, 0, bl_ic_nt);
-    bl_dgemm_str_ab(ms, ns, ks, &XA[ lda * ks ], &XA[ ms + lda * ks ], packA, lda, -1, &XB[ ks ], &XB[ ks + ldb * ns ], packB, ldb, 1, &C[ 0 ], &C[ 0 ], cTemp, ldc, 1, 0, bl_ic_nt);
+    bl_dgemm_str_ab(ms, ns, ks, &XA[ 0 ], &XA[ ms + lda * ks ], packA, lda, 1, &XB[ 0 ], &XB[ ks + ldb * ns ], packB, ldb, 1, &C[ 0 ], &C[ ms + ldc * ns ], ldc, 1, 1, bl_ic_nt);
+    bl_dgemm_str_ab(ms, ns, ks, &XA[ ms ], &XA[ ms + lda * ks ], packA, lda, 1, &XB[ 0 ], &XB[ 0 ], packB, ldb, 0, &C[ ms ], &C[ ms + ldc * ns ], ldc, 1, -1, bl_ic_nt);
+    bl_dgemm_str_ab(ms, ns, ks, &XA[ 0 ], &XA[ 0 ], packA, lda, 0, &XB[ ldb * ns ], &XB[ ks + ldb * ns ], packB, ldb, -1, &C[ ldc * ns ], &C[ ms + ldc * ns ], ldc, 1, 1, bl_ic_nt);
+    bl_dgemm_str_ab(ms, ns, ks, &XA[ ms + lda * ns ], &XA[ 0 ], packA, lda, 0, &XB[ ks ], &XB[ 0 ], packB, ldb, -1, &C[ 0 ], &C[ ms ], ldc, 1, 1, bl_ic_nt);
+    bl_dgemm_str_ab(ms, ns, ks, &XA[ 0 ], &XA[ lda * ks ], packA, lda, 1, &XB[ ks + ldb * ns ], &XB[ 0 ], packB, ldb, 0, &C[ ldc * ns ], &C[ 0 ], ldc, 1, -1, bl_ic_nt);
+    bl_dgemm_str_ab(ms, ns, ks, &XA[ ms ], &XA[ 0 ], packA, lda, -1, &XB[ 0 ], &XB[ ldb * ns ], packB, ldb, 1, &C[ ms + ldc * ns ], &C[ 0 ], ldc, 1, 0, bl_ic_nt);
+    bl_dgemm_str_ab(ms, ns, ks, &XA[ lda * ks ], &XA[ ms + lda * ks ], packA, lda, -1, &XB[ ks ], &XB[ ks + ldb * ns ], packB, ldb, 1, &C[ 0 ], &C[ 0 ], ldc, 1, 0, bl_ic_nt);
 
     free( packA );
     free( packB );
-    free( cTemp );
 }
 
 

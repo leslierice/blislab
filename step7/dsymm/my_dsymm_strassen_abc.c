@@ -56,7 +56,7 @@ inline void packA_add_mcxkc_d_str_abc(
         int    strucAA,
         double *XAB,
         int    strucAB,
-        int    gamma,
+        double gamma,
         int    ldXA,
         int    inc_aa,
         int    inc_ab,
@@ -202,7 +202,7 @@ inline void packB_add_kcxnc_d_str_abc(
         int    k,
         double *XBA,
         double *XBB,
-        int    gamma,
+        double gamma,
         int    ldXB, // ldXB is the original k
         int    offsetb,
         double *packB
@@ -273,8 +273,8 @@ void bl_macro_kernel_str_abc(
         double *CA,
         double *CB,
         int    ldc,
-        int    gammaCA,
-        int    gammaCB
+        double gammaCA,
+        double gammaCB
         )
 {
     int bl_ic_nt;
@@ -344,17 +344,17 @@ void bl_dsymm_str_abc(
         int    strucAB,
         double *packA,
         int    lda,
-        int    gammaA,
+        double gammaA,
         double *XBA,
         double *XBB,
         double *packB,
         int    ldb,
-        int    gammaB,
+        double gammaB,
         double *CA,        // must be aligned
         double *CB,
         int    ldc,        // ldc must also be aligned
-        int    gammaCA,
-        int    gammaCB,
+        double gammaCA,
+        double gammaCB,
         int    bl_ic_nt
         )
 {

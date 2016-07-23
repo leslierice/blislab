@@ -8,17 +8,15 @@ void bl_dgemm_asm_8x4_strassen(
     double *ca,
     double *cb,
     unsigned long long ldc,
-    int gammaCA,
-    int gammaCB,
+    double gammaCA,
+    double gammaCB,
     aux_t  *aux
     )
 {
     double *g1p, *g2p;
 
-    double g1_val = (double) gammaCA, g2_val = (double) gammaCB;
-
-    g1p = &g1_val;
-    g2p = &g2_val;
+    g1p = &gammaCA;
+    g2p = &gammaCB;
 
     unsigned long long k_iter = (unsigned long long)k / 4;
     unsigned long long k_left = (unsigned long long)k % 4;

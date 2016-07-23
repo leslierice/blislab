@@ -7,7 +7,7 @@ export BLISLAB_USE_INTEL=true
 echo "BLISLAB_USE_INTEL = $BLISLAB_USE_INTEL"
 
 # Whether use BLAS or not?
-export BLISLAB_USE_BLAS=false
+export BLISLAB_USE_BLAS=true
 echo "BLISLAB_USE_BLAS = $BLISLAB_USE_BLAS"
 
 # Optimization Level (O0, O1, O2, O3)

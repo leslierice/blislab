@@ -56,7 +56,7 @@ inline void packA_add_mcxkc_d_str_ab(
         int    strucAA,
         double *XAB,
         int    strucAB,
-        int    gamma,
+        double gamma,
         int    ldXA,
         int    inc_aa,
         int    inc_ab,
@@ -202,7 +202,7 @@ inline void packB_add_kcxnc_d_str_ab(
         int    k,
         double *XBA,
         double *XBB,
-        int    gamma,
+        double gamma,
         int    ldXB, // ldXB is the original k
         int    offsetb,
         double *packB
@@ -273,8 +273,8 @@ void bl_macro_kernel_str_ab(
         double *CA,
         double *CB,
         int    ldc,
-        int    gammaCA,
-        int    gammaCB
+        double gammaCA,
+        double gammaCB
         )
 {
     int bl_ic_nt;
@@ -301,30 +301,27 @@ void bl_macro_kernel_str_ab(
                 aux.b_next += DGEMM_NR * k;
             }
 
+            double *c_tmp = calloc( DGEMM_MR * DGEMM_NR * k, sizeof(double) );
+
+            ( *bl_micro_kernel_strassen ) (
+                    k,
+                    &packA[ i * k ],
+                    &packB[ j * k ],
+                    c_tmp,
+                    CB,
+                    (unsigned long long) DGEMM_MR,
+                    gammaCA,
+                    0,
+                    &aux
+                    );
+
+            mkl_axpym( DGEMM_MR, DGEMM_NR, &gammaCA, c_tmp, DGEMM_MR, &CA[ j * ldc + i ], ldc );
             if ( gammaCB != 0 ) {
-                ( *bl_micro_kernel_strassen ) (
-                        k,
-                        &packA[ i * k ],
-                        &packB[ j * k ],
-                        &CA[ j * ldc + i ],
-                        &CB[ j * ldc + i ],
-                        (unsigned long long) ldc,
-                        gammaCA,
-                        gammaCB,
-                        &aux
-                        );
+                mkl_axpym( DGEMM_MR, DGEMM_NR, &gammaCB, c_tmp, DGEMM_MR, &CB[ j * ldc + i ], ldc );
             }
 
-            else {
-                ( *bl_micro_kernel ) (
-                        k,
-                        &packA[ i * k ],
-                        &packB[ j * k ],
-                        &CA[ j * ldc + i ],
-                        (unsigned long long) ldc,
-                        &aux
-                );
-            }
+            free( c_tmp );
+
         }                                                        // 1-th loop around micro-kernel
     }                                                            // 2-th loop around micro-kernel
 }
@@ -344,17 +341,17 @@ void bl_dsymm_str_ab(
         int    strucAB,
         double *packA,
         int    lda,
-        int    gammaA,
+        double gammaA,
         double *XBA,
         double *XBB,
         double *packB,
         int    ldb,
-        int    gammaB,
+        double gammaB,
         double *CA,        // must be aligned
         double *CB,
         int    ldc,        // ldc must also be aligned
-        int    gammaCA,
-        int    gammaCB,
+        double gammaCA,
+        double gammaCB,
         int    bl_ic_nt
         )
 {
