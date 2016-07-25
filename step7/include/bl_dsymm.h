@@ -137,9 +137,8 @@ void mkl_axpym(
         int n,
         double *buf_alpha,
         double *XA,
-        int lda,
         double *XB,
-        int ldb
+        int ldc
         );
 
 double *bl_malloc_aligned(

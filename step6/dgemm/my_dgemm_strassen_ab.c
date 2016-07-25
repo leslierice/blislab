@@ -226,26 +226,17 @@ void bl_macro_kernel_str_ab(
                 aux.b_next += DGEMM_NR * k;
             }
 
-            double *c_tmp = calloc( aux.m * aux.n * k, sizeof(double) );
-
             ( *bl_micro_kernel_strassen ) (
                     k,
                     &packA[ i * k ],
                     &packB[ j * k ],
-                    c_tmp,
-                    CB,
-                    (unsigned long long) aux.m,
+                    &CA[ j * ldc + i ],
+                    &CB[ j * ldc + i ],
+                    (unsigned long long) ldc,
                     gammaCA,
                     0,
                     &aux
                     );
-
-            mkl_axpym( aux.m, aux.n, &gammaCA, c_tmp, aux.m, &CA[ j * ldc + i ], ldc );
-            if ( gammaCB != 0 ) {
-                mkl_axpym( aux.m, aux.n, &gammaCB, c_tmp, aux.m, &CB[ j * ldc + i ], ldc );
-            }
-
-            free( c_tmp );
 
         }                                                        // 1-th loop around micro-kernel
     }                                                            // 2-th loop around micro-kernel
@@ -281,6 +272,8 @@ void bl_dgemm_str_ab(
     int    i, j, p;
     int    ic, ib, jc, jb, pc, pb;
     int    ir, jr;
+
+    double *c_tmp = calloc( n * ldc, sizeof(double) );
 
     for ( jc = 0; jc < n; jc += DGEMM_NC ) {                                       // 5-th loop around micro-kernel
         jb = min( n - jc, DGEMM_NC );
@@ -358,7 +351,7 @@ void bl_dgemm_str_ab(
                             pb,
                             packA  + tid * DGEMM_MC * pb,
                             packB,
-                            &CA[ jc * ldc + ic ],
+                            &c_tmp[ jc * ldc + ic ],
                             &CB[ jc * ldc + ic ],
                             ldc,
                             gammaCA,
@@ -370,6 +363,14 @@ void bl_dgemm_str_ab(
             }
         }                                                                        // End 4.th loop around micro-kernel
     }                                                                            // End 5.th loop around micro-kernel
+
+    mkl_axpym( m, n, &gammaCA, c_tmp, CA, ldc );
+    if ( gammaCB != 0 ) {
+        mkl_axpym( m, n, &gammaCB, c_tmp, CB, ldc );
+    }
+
+    free( c_tmp );
+
 }
 
 /*

@@ -45,37 +45,52 @@
 
 #include "bl_dsymm.h"
 
+
+// XB = XA
+void mkl_copym(
+    int m,
+    int n,
+    double *XA,
+    double *XB,
+    int ldc
+    )
+{
+    int ii;
+    int incx = 1;
+    int incy = 1;
+
+    #pragma omp parallel for schedule( dynamic )
+    for ( ii = 0; ii < n; ii ++ ) {
+        double *cur_buf_a, *cur_buf_b;
+        cur_buf_a = &XA[ ii * ldc ];
+        cur_buf_b = &XB[ ii * ldc ];
+        dcopy_( &m, cur_buf_a, &incx, cur_buf_b, &incy);
+    }
+
+}
+
 // XB = XB + alpha * XA
 void mkl_axpym(
     int m,
     int n,
     double *buf_alpha,
     double *XA,
-    int lda,
     double *XB,
-    int ldb
+    int ldc
     )
 {
-
-    //printf( "m: %lu, n: %lu, lda: %lu, ldb: %lu\n", m, n, lda, ldb );
-    //printf( "before:buf_a[0]: %lf, buf_b[0]: %lf, *buf_alpha: %lf\n", buf_a[0], buf_b[0], *buf_alpha );
-
     int ii;
     int incx = 1;
     int incy = 1;
 
-    ////#pragma omp parallel for private( cur_buf_a, cur_buf_b ) schedule( dynamic )
     #pragma omp parallel for schedule( dynamic )
     for ( ii = 0; ii < n; ii ++ ) {
         double *cur_buf_a, *cur_buf_b;
-        cur_buf_a = &XA[ ii * lda ];
-        cur_buf_b = &XB[ ii * ldb ];
+        cur_buf_a = &XA[ ii * ldc ];
+        cur_buf_b = &XB[ ii * ldc ];
         daxpy_( &m, buf_alpha, cur_buf_a, &incx, cur_buf_b, &incy );
-        //XA += lda;
-        //XB += ldb;
     }
 
-    //printf( "after:buf_a[0]: %lf, buf_b[0]: %lf, *buf_alpha: %lf\n", buf_a[0], buf_b[0], *buf_alpha );
 }
 
 
