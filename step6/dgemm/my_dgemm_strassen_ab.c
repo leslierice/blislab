@@ -273,7 +273,11 @@ void bl_dgemm_str_ab(
     int    ic, ib, jc, jb, pc, pb;
     int    ir, jr;
 
-    double *c_tmp = calloc( n * ldc, sizeof(double) );
+    double *c_tmp = bl_malloc_aligned( m, ldc, sizeof(double) );
+
+    for ( i = 0; i < m * ldc ; i++ ) {
+        c_tmp[ i ] = 0;
+    }
 
     for ( jc = 0; jc < n; jc += DGEMM_NC ) {                                       // 5-th loop around micro-kernel
         jb = min( n - jc, DGEMM_NC );
