@@ -77,9 +77,13 @@ void bl_dgemm_str_naive(
         )
 {
     //malloc XA, XB, XC_tmp
-    double *XA    = (double*)malloc( sizeof(double) * m * k );
-    double *XB    = (double*)malloc( sizeof(double) * k * n );
+    //printf( "m=%d,n=%d,k=%d,lda=%d,ldb=%d,ldc=%d\n", m, n, k, lda, ldb, ldc );
+
+    double *XA    = (double*)malloc( sizeof(double) * lda * k );
+    double *XB    = (double*)malloc( sizeof(double) * ldb * n );
     double *XC_tmp = bl_malloc_aligned( ldc, n + 4, sizeof(double) );
+
+    memset( XC_tmp, 0, sizeof(double) * ldc * ( n + 4 ) );
 
     double dbl_gammaA, dbl_gammaB;
     double dbl_gammaCA, dbl_gammaCB;
