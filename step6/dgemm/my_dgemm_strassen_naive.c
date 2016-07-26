@@ -100,11 +100,11 @@ void bl_dgemm_str_naive(
     }
 
     //XB = XBA + gammaB * XBB
-    mkl_copym( m, k, XBA, XB, ldb );
+    mkl_copym( k, n, XBA, XB, ldb );
     if ( gammaB != 0 ) {
         dbl_gammaB = (double) gammaB;
         ptr_gammaB = &dbl_gammaB;
-        mkl_axpym( m, k, ptr_gammaB, XBB, XB, ldb );
+        mkl_axpym( k, n, ptr_gammaB, XBB, XB, ldb );
     }
 
     bl_dgemm( m, n, k, XA, lda, XB, ldb, XC_tmp, ldc );
@@ -166,12 +166,19 @@ void bl_dgemm_strassen_naive(
     packA  = bl_malloc_aligned( DGEMM_KC, ( DGEMM_MC + 1 ) * bl_ic_nt, sizeof(double) );
     packB  = bl_malloc_aligned( DGEMM_KC, ( DGEMM_NC + 1 )           , sizeof(double) );
 
+    // M1: c00 = 1*c00+1*(a00+a11)(b00+b11); c11 = 1*c11+1*(a00+a11)(b00+b11)
     bl_dgemm_str_naive(ms, ns, ks, &XA[ 0 ], &XA[ ms + lda * ks ], packA, lda, 1, &XB[ 0 ], &XB[ ks + ldb * ns ], packB, ldb, 1, &C[ 0 ], &C[ ms + ldc * ns ], ldc, 1, 1, bl_ic_nt);
+    // M2: c10 = 0*c10+1*(a10+a11)b00; c11 = 1*c11-1*(a10+a11)b00
     bl_dgemm_str_naive(ms, ns, ks, &XA[ ms ], &XA[ ms + lda * ks ], packA, lda, 1, &XB[ 0 ], &XB[ 0 ], packB, ldb, 0, &C[ ms ], &C[ ms + ldc * ns ], ldc, 1, -1, bl_ic_nt);
+    // M3: c01 = 0*c01+1*a00(b01-b11); c11 = 1*c11+1*a00(b01-b11)
     bl_dgemm_str_naive(ms, ns, ks, &XA[ 0 ], &XA[ 0 ], packA, lda, 0, &XB[ ldb * ns ], &XB[ ks + ldb * ns ], packB, ldb, -1, &C[ ldc * ns ], &C[ ms + ldc * ns ], ldc, 1, 1, bl_ic_nt);
-    bl_dgemm_str_naive(ms, ns, ks, &XA[ ms + lda * ns ], &XA[ 0 ], packA, lda, 0, &XB[ ks ], &XB[ 0 ], packB, ldb, -1, &C[ 0 ], &C[ ms ], ldc, 1, 1, bl_ic_nt);
+    // M4: c00 = 1*c00+1*a11(b10-b00); c10 = 1*c10+1*a11(b10-b00)
+    bl_dgemm_str_naive(ms, ns, ks, &XA[ ms + lda * ks ], &XA[ 0 ], packA, lda, 0, &XB[ ks ], &XB[ 0 ], packB, ldb, -1, &C[ 0 ], &C[ ms ], ldc, 1, 1, bl_ic_nt);
+    // M5: c00 = 1*c00-1*(a00+a01)b11; c01 = 1*c01+1*(a00+a01)b11
     bl_dgemm_str_naive(ms, ns, ks, &XA[ 0 ], &XA[ lda * ks ], packA, lda, 1, &XB[ ks + ldb * ns ], &XB[ 0 ], packB, ldb, 0, &C[ ldc * ns ], &C[ 0 ], ldc, 1, -1, bl_ic_nt);
+    // M6: c11 = 1*c11+(a10-a00)(b00+b01)
     bl_dgemm_str_naive(ms, ns, ks, &XA[ ms ], &XA[ 0 ], packA, lda, -1, &XB[ 0 ], &XB[ ldb * ns ], packB, ldb, 1, &C[ ms + ldc * ns ], &C[ 0 ], ldc, 1, 0, bl_ic_nt);
+    // M7: c00 = 1*c00+(a01-a11)(b10+b11)
     bl_dgemm_str_naive(ms, ns, ks, &XA[ lda * ks ], &XA[ ms + lda * ks ], packA, lda, -1, &XB[ ks ], &XB[ ks + ldb * ns ], packB, ldb, 1, &C[ 0 ], &C[ 0 ], ldc, 1, 0, bl_ic_nt);
 
     free( packA );

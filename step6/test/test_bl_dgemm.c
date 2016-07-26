@@ -91,7 +91,7 @@ void test_bl_dgemm(
     lda     = m;
     ldb     = k;
     ldc     = ( ( m - 1 ) / DGEMM_MR + 1 ) * DGEMM_MR;
-    ldc_ref = m;
+    ldc_ref = ( ( m - 1 ) / DGEMM_MR + 1 ) * DGEMM_MR;
     C     = bl_malloc_aligned( ldc, n + 4, sizeof(double) );
     C_ref = bl_malloc_aligned( ldc, n + 4, sizeof(double) );
 
@@ -121,7 +121,9 @@ void test_bl_dgemm(
     for ( i = 0; i < nrepeats; i ++ ) {
         bl_dgemm_beg = bl_clock();
         {
-            bl_dgemm_strassen_abc(
+            bl_dgemm_strassen_naive(
+            //bl_dgemm_strassen_ab(
+            //bl_dgemm_strassen_abc(
                     m,
                     n,
                     k,
