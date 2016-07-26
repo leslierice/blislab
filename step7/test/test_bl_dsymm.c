@@ -91,7 +91,7 @@ void test_bl_dsymm(
     lda     = m;
     ldb     = k;
     ldc     = ( ( m - 1 ) / DGEMM_MR + 1 ) * DGEMM_MR;
-    ldc_ref = m;
+    ldc_ref = ( ( m - 1 ) / DGEMM_MR + 1 ) * DGEMM_MR;
     C     = bl_malloc_aligned( ldc, n + 4, sizeof(double) );
     C_ref = bl_malloc_aligned( ldc, n + 4, sizeof(double) );
 
@@ -124,6 +124,8 @@ void test_bl_dsymm(
     for ( i = 0; i < nrepeats; i ++ ) {
         bl_dgemm_beg = bl_clock();
         {
+            //bl_dsymm_strassen_naive(
+            //bl_dsymm_strassen_ab(
             bl_dsymm_strassen_abc(
                     m,
                     n,

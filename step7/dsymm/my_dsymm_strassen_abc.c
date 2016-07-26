@@ -565,12 +565,19 @@ void bl_dsymm_strassen_abc(
     packA  = bl_malloc_aligned( DGEMM_KC, ( DGEMM_MC + 1 ) * bl_ic_nt, sizeof(double) );
     packB  = bl_malloc_aligned( DGEMM_KC, ( DGEMM_NC + 1 )           , sizeof(double) );
 
+    // M1: c00 = 1*c00+1*(a00+a11)(b00+b11); c11 = 1*c11+1*(a00+a11)(b00+b11)
     bl_dsymm_str_abc(ms, ns, ks, &XA[ 0 ], BL_SYMM, &XA[ ms + lda * ks ], BL_SYMM, packA, lda, 1, &XB[ 0 ], &XB[ ks + ldb * ns ], packB, ldb, 1, &C[ 0 ], &C[ ms + ldc * ns ], ldc, 1, 1, bl_ic_nt);
+    // M2: c10 = 0*c10+1*(a10+a11)b00; c11 = 1*c11-1*(a10+a11)b00
     bl_dsymm_str_abc(ms, ns, ks, &XA[ ms ], BL_GEN, &XA[ ms + lda * ks ], BL_SYMM, packA, lda, 1, &XB[ 0 ], &XB[ 0 ], packB, ldb, 0, &C[ ms ], &C[ ms + ldc * ns ], ldc, 1, -1, bl_ic_nt);
+    // M3: c01 = 0*c01+1*a00(b01-b11); c11 = 1*c11+1*a00(b01-b11)
     bl_dsymm_str_abc(ms, ns, ks, &XA[ 0 ], BL_SYMM, &XA[ 0 ], BL_SYMM, packA, lda, 0, &XB[ ldb * ns ], &XB[ ks + ldb * ns ], packB, ldb, -1, &C[ ldc * ns ], &C[ ms + ldc * ns ], ldc, 1, 1, bl_ic_nt);
-    bl_dsymm_str_abc(ms, ns, ks, &XA[ ms + lda * ns ], BL_SYMM, &XA[ 0 ], BL_SYMM, packA, lda, 0, &XB[ ks ], &XB[ 0 ], packB, ldb, -1, &C[ 0 ], &C[ ms ], ldc, 1, 1, bl_ic_nt);
+    // M4: c00 = 1*c00+1*a11(b10-b00); c10 = 1*c10+1*a11(b10-b00)
+    bl_dsymm_str_abc(ms, ns, ks, &XA[ ms + lda * ks ], BL_SYMM, &XA[ 0 ], BL_SYMM, packA, lda, 0, &XB[ ks ], &XB[ 0 ], packB, ldb, -1, &C[ 0 ], &C[ ms ], ldc, 1, 1, bl_ic_nt);
+    // M5: c00 = 1*c00-1*(a00+a01)b11; c01 = 1*c01+1*(a00+a01)b11
     bl_dsymm_str_abc(ms, ns, ks, &XA[ 0 ], BL_SYMM, &XA[ ms ], BL_TRANS, packA, lda, 1, &XB[ ks + ldb * ns ], &XB[ 0 ], packB, ldb, 0, &C[ ldc * ns ], &C[ 0 ], ldc, 1, -1, bl_ic_nt);
+    // M6: c11 = 1*c11+(a10-a00)(b00+b01)
     bl_dsymm_str_abc(ms, ns, ks, &XA[ ms ], BL_GEN, &XA[ 0 ], BL_SYMM, packA, lda, -1, &XB[ 0 ], &XB[ ldb * ns ], packB, ldb, 1, &C[ ms + ldc * ns ], &C[ 0 ], ldc, 1, 0, bl_ic_nt);
+    // M7: c00 = 1*c00+(a01-a11)(b10+b11)
     bl_dsymm_str_abc(ms, ns, ks, &XA[ ms ], BL_TRANS, &XA[ ms + lda * ks ], BL_SYMM, packA, lda, -1, &XB[ ks ], &XB[ ks + ldb * ns ], packB, ldb, 1, &C[ 0 ], &C[ 0 ], ldc, 1, 0, bl_ic_nt);
 
     free( packA );
