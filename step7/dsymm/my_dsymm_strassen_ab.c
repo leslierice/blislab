@@ -307,12 +307,11 @@ void bl_macro_kernel_str_ab(
                     &packB[ j * k ],
                     &CA[ j * ldc + i ],
                     &CB[ j * ldc + i ],
-                    (unsigned long long) DGEMM_MR,
+                    (unsigned long long) ldc,
                     gammaCA,
                     0,
                     &aux
                     );
-
         }                                                        // 1-th loop around micro-kernel
     }                                                            // 2-th loop around micro-kernel
 }
@@ -503,7 +502,7 @@ void bl_dsymm_str_ab(
                             pb,
                             packA  + tid * DGEMM_MC * pb,
                             packB,
-                            &CA[ jc * ldc + ic ],
+                            &c_tmp[ jc * ldc + ic ],
                             &CB[ jc * ldc + ic ],
                             ldc,
                             gammaCA,
