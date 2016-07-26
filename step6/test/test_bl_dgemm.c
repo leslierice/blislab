@@ -121,9 +121,9 @@ void test_bl_dgemm(
     for ( i = 0; i < nrepeats; i ++ ) {
         bl_dgemm_beg = bl_clock();
         {
-            bl_dgemm_strassen_naive(
+            //bl_dgemm_strassen_naive(
             //bl_dgemm_strassen_ab(
-            //bl_dgemm_strassen_abc(
+            bl_dgemm_strassen_abc(
                     m,
                     n,
                     k,

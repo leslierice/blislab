@@ -273,11 +273,9 @@ void bl_dgemm_str_ab(
     int    ic, ib, jc, jb, pc, pb;
     int    ir, jr;
 
-    double *c_tmp = bl_malloc_aligned( m, ldc, sizeof(double) );
+    double *c_tmp = bl_malloc_aligned( ldc, n + 4, sizeof(double) );
 
-    for ( i = 0; i < m * ldc ; i++ ) {
-        c_tmp[ i ] = 0;
-    }
+    memset( c_tmp, 0, sizeof(double) * ldc * ( n + 4 ) );
 
     for ( jc = 0; jc < n; jc += DGEMM_NC ) {                                       // 5-th loop around micro-kernel
         jb = min( n - jc, DGEMM_NC );
@@ -419,9 +417,9 @@ void bl_dgemm_strassen_ab(
 
     // M1: c00 = 1*c00+1*(a00+a11)(b00+b11); c11 = 1*c11+1*(a00+a11)(b00+b11)
     bl_dgemm_str_ab(ms, ns, ks, &XA[ 0 ], &XA[ ms + lda * ks ], packA, lda, 1, &XB[ 0 ], &XB[ ks + ldb * ns ], packB, ldb, 1, &C[ 0 ], &C[ ms + ldc * ns ], ldc, 1, 1, bl_ic_nt);
-    // M2: c10 = 0*c10+1*(a10+a11)b00; c11 = 1*c11-1*(a10+a11)b00
+    // M2: c10 = 1*c10+1*(a10+a11)b00; c11 = 1*c11-1*(a10+a11)b00
     bl_dgemm_str_ab(ms, ns, ks, &XA[ ms ], &XA[ ms + lda * ks ], packA, lda, 1, &XB[ 0 ], &XB[ 0 ], packB, ldb, 0, &C[ ms ], &C[ ms + ldc * ns ], ldc, 1, -1, bl_ic_nt);
-    // M3: c01 = 0*c01+1*a00(b01-b11); c11 = 1*c11+1*a00(b01-b11)
+    // M3: c01 = 1*c01+1*a00(b01-b11); c11 = 1*c11+1*a00(b01-b11)
     bl_dgemm_str_ab(ms, ns, ks, &XA[ 0 ], &XA[ 0 ], packA, lda, 0, &XB[ ldb * ns ], &XB[ ks + ldb * ns ], packB, ldb, -1, &C[ ldc * ns ], &C[ ms + ldc * ns ], ldc, 1, 1, bl_ic_nt);
     // M4: c00 = 1*c00+1*a11(b10-b00); c10 = 1*c10+1*a11(b10-b00)
     bl_dgemm_str_ab(ms, ns, ks, &XA[ ms + lda * ks ], &XA[ 0 ], packA, lda, 0, &XB[ ks ], &XB[ 0 ], packB, ldb, -1, &C[ 0 ], &C[ ms ], ldc, 1, 1, bl_ic_nt);
