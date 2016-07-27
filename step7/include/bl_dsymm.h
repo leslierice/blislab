@@ -157,6 +157,30 @@ void bl_printmatrix(
 double bl_clock( void );
 double bl_clock_helper();
 
+void bl_dsymm(
+    int    m,
+    int    n,
+    int    k,
+    double *XA,
+    int    lda,
+    double *XB,
+    int    ldb,
+    double *XC,
+    int    ldc
+    );
+
+void bl_dgemm(
+    int    m,
+    int    n,
+    int    k,
+    double *XA,
+    int    lda,
+    double *XB,
+    int    ldb,
+    double *XC,
+    int    ldc
+    );
+
 void bl_dsymm_ref(
     int    m,
     int    n,

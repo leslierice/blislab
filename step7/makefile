@@ -9,8 +9,10 @@ $(info * Using LDFLAGS=${LDFLAGS})
 
 FRAME_CC_SRC=  \
 							 dsymm/my_dsymm.c \
+							 dsymm/my_dgemm.c \
 							 dsymm/my_dsymm_strassen_abc.c \
 							 dsymm/my_dsymm_strassen_ab.c \
+							 dsymm/my_dsymm_strassen_naive.c \
 							 dsymm/bl_dsymm_ref.c \
 							 dsymm/bl_dgemm_util.c \
 
