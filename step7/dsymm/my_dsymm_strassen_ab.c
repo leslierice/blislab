@@ -301,17 +301,26 @@ void bl_macro_kernel_str_ab(
                 aux.b_next += DGEMM_NR * k;
             }
 
-            ( *bl_micro_kernel_strassen ) (
+            //( *bl_micro_kernel_strassen ) (
+            //        k,
+            //        &packA[ i * k ],
+            //        &packB[ j * k ],
+            //        &CA[ j * ldc + i ],
+            //        &CB[ j * ldc + i ],
+            //        (unsigned long long) ldc,
+            //        gammaCA,
+            //        0,
+            //        &aux
+            //        );
+            ( *bl_micro_kernel ) (
                     k,
                     &packA[ i * k ],
                     &packB[ j * k ],
                     &CA[ j * ldc + i ],
-                    &CB[ j * ldc + i ],
                     (unsigned long long) ldc,
-                    gammaCA,
-                    0,
                     &aux
                     );
+
         }                                                        // 1-th loop around micro-kernel
     }                                                            // 2-th loop around micro-kernel
 }
